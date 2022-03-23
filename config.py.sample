@@ -1,0 +1,6 @@
+API_BASE_URL = 'https://geotrekdemo.ecrins-parcnational.fr/api/v2/'
+GAG_BASE_LANGUAGE = 'fr'
+AUTHENT_STRUCTURE = 'PNE' ## Le nom de la source des données. Doit correspondre à une entrée dans la table "authent_structure". Indispensable pour la tracabilité des données.
+SQLALCHEMY_DATABASE_URI = 'postgresql://username:password@host:port/dbname'
+SQLALCHEMY_TRACK_MODIFICATIONS = False
+SRID = 2154
