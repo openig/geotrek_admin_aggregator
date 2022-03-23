@@ -11,3 +11,6 @@ Au-delà du « territoire pilote » que constitue la Lozère, le travail a vocat
 
 ## Choix techniques
 L’application développée se connectera à l’API V2 pour récupérer des données d’une base source et adaptera les données reçues aux catégories de la base de données aggregator, ainsi qu'au modèle objet de Geotrek-admin. Les technologies privilégiées sont le langage Python, le framework Flask et le toolkit SQLAlchemy.
+
+
+![alt](img/logo_openig.png) | ![alt](img/logo_lozere.jpg) | ![alt](img/logo_pnc.jpg)
