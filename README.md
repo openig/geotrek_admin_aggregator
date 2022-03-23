@@ -1,0 +1,1 @@
+# geotrek-admin-aggregator
