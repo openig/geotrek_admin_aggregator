@@ -7,34 +7,6 @@ from config.config import GAG_BASE_LANGUAGE
 from gag.utils import deserialize_translated_fields
 #from gag.codegen import CoreNetwork
 
-@click.command("fetch_api")
-@with_appcontext
-def fetch_api():
-    import requests
-    from config.config import API_BASE_URL
-
-    print("Which data do you want to fetch?")
-    data_model = input()
-    url = API_BASE_URL + data_model
-
-    print("Which language?")
-    language = input()
-    params = {}
-    if language:
-        params["language"] = language
-
-    print("Which poi types?")
-    types = input()
-    if types:
-        params["types"] = types
-
-    print("Fetching API...")
-    response = requests.get(url, params = params)
-    print(response.json())
-
-    with open('data.json', 'w', encoding='utf-8') as f:
-        json.dump(response.json(), f, ensure_ascii=False, indent=4)
-
 
 @click.command("test")
 @with_appcontext
