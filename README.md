@@ -12,6 +12,44 @@ Au-delà du « territoire pilote » que constitue la Lozère, le travail a vocat
 ## Choix techniques
 L’application développée se connectera à l’API V2 pour récupérer des données d’une base source et adaptera les données reçues aux catégories de la base de données aggregator, ainsi qu'au modèle objet de Geotrek-admin. Les technologies privilégiées sont le langage Python, le framework Flask et le toolkit SQLAlchemy.
 
+## Configuration
+
+### Fichier `config.py.sample`
+Renseigner tous les paramètres :
+ - `API_BASE_URL` : URL de l'API v2 de la base de données source
+ - `AUTHENT_STRUCTURE` : Nom de la source des données. Doit correspondre à une entrée dans la table "authent_structure". Indispensable pour la tracabilité des données.
+ - `SQLALCHEMY_DATABASE_URI` : URI de la base de données aggregator, au format SQLAlchemy
+ - `GAG_BASE_LANGUAGE` : langue par défaut de la base de données aggregator
+ - `SRID` : SRID du système de coordoonées de la base de données aggregator
+ 
+ Renommer le fichier `config.py.sample` en `config.py`
+
+### Fichier `env.py`
+/!\ N'a pas vocation à être un fichier à configurer manuellement /!\
+Pour l'instant, la mise en correspondance des catégories des bases de données source et aggregator se fait via le dictionnaire `source_cat_to_gag_cat`. Chaque table de catégories y est recensée. Pour chaque table, l'ensemble des catégories de la base de données source est listée, et pour chacune d'entre elles la catégorie à laquelle elle correspond dans la base aggregator.
+
+## Utilisation
+/!\ Prototype en développement /!\
+
+Se placer dans le répertoire principal de l'application, créer un environnement virtuel et l'activer :
+``` zsh
+python3 -m venv venv
+source venv/bin/activate
+```
+
+Installer les packages requis :
+``` zsh
+pip install -r requirements.txt
+```
+
+Lancer la commande suivante pour interroger l'API et remplir la base de données indiquées dans la configuration :
+``` zsh
+flask test
+```
+
+## Fonctionnement
+
+
 &nbsp;
 <p align="middle">
   <img src="img/logo_openig.png" height="100" />
