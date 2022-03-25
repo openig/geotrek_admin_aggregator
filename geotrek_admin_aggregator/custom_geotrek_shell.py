@@ -16,6 +16,7 @@ def fetch_api(API_BASE_URL):
 
 
 
+
 def get_name_trek(identifiant):
     trek = Trek.objects.get(id=identifiant)
     trek_name = trek.name_fr
