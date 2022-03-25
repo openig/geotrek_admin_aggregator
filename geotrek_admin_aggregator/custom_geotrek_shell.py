@@ -1,6 +1,6 @@
 import requests
 from geotrek.trekking.models import Trek, POIType
-from geotrek.common.geotrek_admin_aggregator.config.config import API_BASE_URL, GAG_BASE_LANGUAGE
+from config.config import API_BASE_URL, GAG_BASE_LANGUAGE
 
 
 def fetch_api(API_BASE_URL):
@@ -13,8 +13,6 @@ def fetch_api(API_BASE_URL):
 
     newPoiType = POIType.objects.create(label=r["label"][GAG_BASE_LANGUAGE])
     newPoiType.save()
-
-
 
 
 def get_name_trek(identifiant):
