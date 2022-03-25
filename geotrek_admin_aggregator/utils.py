@@ -52,32 +52,32 @@ def camel_case(s):
     s = sub(r"(_)+", " ", s).title().replace(" ", "")
     return ''.join(s)
 
-def get_api_field(r, index, c_name, value, dict_to_insert):
-    print(c_name)
-    if type(value[c_name]) is list and value[c_name][1] in r[index][value[c_name][0]]:
-        dict_to_insert[c_name] = r[index][value[c_name][0]][value[c_name][1]]
-    elif type(value[c_name]) is str:
-        dict_to_insert[c_name] = r[index][value[c_name]]
+def get_api_field(r, index, f_name, value, dict_to_insert):
+    print(f_name)
+    if type(value[f_name]) is list and value[f_name][1] in r[index][value[f_name][0]]:
+        dict_to_insert[f_name] = r[index][value[f_name][0]][value[f_name][1]]
+    elif type(value[f_name]) is str:
+        dict_to_insert[f_name] = r[index][value[f_name]]
     
     return dict_to_insert
 
-def deserialize_translated_fields(r, index, c_name, dict_to_insert, normal_columns):
+def deserialize_translated_fields(r, index, f_name, dict_to_insert, normal_columns):
     from re import search
     from config.config import GAG_BASE_LANGUAGE
     # objectif : access => {"access" = "bla_fr", "access_fr" = "bla_fr", "access_en" = "bla_en"}
-    reg = "^{}_.*".format(c_name)
+    reg = "^{}_.*".format(f_name)
     languages_gag = [(column['name'])[-2:] for column in normal_columns if search(reg, column['name'])]
 
 
     print('languages_gag: ', languages_gag)
 
-    dict_to_insert[c_name] = r[index][c_name][GAG_BASE_LANGUAGE]
+    dict_to_insert[f_name] = r[index][f_name][GAG_BASE_LANGUAGE]
 
     for l in languages_gag:
-        translated_column_name = c_name + "_" + l
-        if l in r[index][c_name]:
-            dict_to_insert[translated_column_name] = r[index][c_name][l]
-        elif c_name == "published":
+        translated_column_name = f_name + "_" + l
+        if l in r[index][f_name]:
+            dict_to_insert[translated_column_name] = r[index][f_name][l]
+        elif f_name == "published":
             dict_to_insert[translated_column_name] = False
     
     return dict_to_insert
