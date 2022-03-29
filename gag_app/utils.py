@@ -2,24 +2,12 @@ def geom4326_to_wkt(data):
     from config.config import SRID
     from json import dumps as json_dumps
     from geojson import loads as geojson_loads
-    from shapely.wkt import loads, dumps
-    from shapely.geometry import shape
-    from shapely.ops import transform
-    from pyproj import CRS, Transformer
+    from django.contrib.gis.geos import GEOSGeometry
 
-    j = json_dumps(data)
-    g = geojson_loads(j)
-    s = shape(g)
-    geom = loads(dumps(s, output_dimension=2))
+    geom = GEOSGeometry(str(data)) #default SRID of GEOSGeometry is 4326
+    geom.transform(SRID)
 
-    wgs84 = CRS('EPSG:4326')
-    srid_gag = CRS('EPSG:{}'.format(SRID))
-    project = Transformer.from_crs(wgs84, srid_gag, always_xy=True).transform
-    geom_transformed = transform(project, geom)
-
-    geom_wkt="SRID={};{}".format(SRID, geom_transformed)
-
-    return geom_wkt
+    return geom.wkt
 
 
 def get_or_create(model, **kwargs):
@@ -61,23 +49,22 @@ def get_api_field(r, index, f_name, value, dict_to_insert):
     
     return dict_to_insert
 
-def deserialize_translated_fields(r, index, f_name, dict_to_insert, normal_columns):
-    from re import search
+def deserialize_translated_fields(r_index, f_name, dict_to_insert, normal_columns):
     from config.config import GAG_BASE_LANGUAGE
-    # objectif : access => {"access" = "bla_fr", "access_fr" = "bla_fr", "access_en" = "bla_en"}
-    reg = "^{}_.*".format(f_name)
-    languages_gag = [(column['name'])[-2:] for column in normal_columns if search(reg, column['name'])]
-
-
+    from django.conf import settings
+    
+    languages_gag = settings.MODELTRANSLATION_LANGUAGES
     print('languages_gag: ', languages_gag)
 
-    dict_to_insert[f_name] = r[index][f_name][GAG_BASE_LANGUAGE]
+    dict_to_insert[f_name] = r_index[f_name][GAG_BASE_LANGUAGE]
 
     for l in languages_gag:
         translated_column_name = f_name + "_" + l
-        if l in r[index][f_name]:
-            dict_to_insert[translated_column_name] = r[index][f_name][l]
+        if l in r_index[f_name]:
+            dict_to_insert[translated_column_name] = r_index[f_name][l]
         elif f_name == "published":
             dict_to_insert[translated_column_name] = False
+        else:
+            dict_to_insert[translated_column_name] = ''
     
     return dict_to_insert

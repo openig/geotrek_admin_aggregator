@@ -34,8 +34,6 @@ common = {
 
 core_topology = {
     "db_column_api_field" : {
-        "date_insert" : "create_datetime",
-        "date_update" : "update_datetime",
         "uuid" : "uuid",
     },
     "default_values" : {
@@ -66,7 +64,7 @@ fk_not_integrated = {
 
 specific = {
     "POI" : {
-        "type_id" : ["type_label", GAG_BASE_LANGUAGE],
+        "type" : ["type_label", GAG_BASE_LANGUAGE],
     },
     "Trek" : {
         "accessibility_infrastructure" : ["disabled_infrastructure", GAG_BASE_LANGUAGE],
@@ -77,44 +75,44 @@ specific = {
         "duration" : "duration",
         "eid2" : "second_external_id",
         "reservation_id": "reservation_id",
-    }
+    },
 }
 
 source_cat_to_gag_cat = {
     "trekking_poitype" : {
-        "Flore" : "Faune et Flore",
-        "Faune" : "Faune et Flore",
-        "Géologie" : "Eau et géologie",
+        "Flore" : "Flore",
+        "Faune" : "Faune",
+        "Géologie" : "Géologie",
         "Architecture" : "Architecture",
-        "Point de vue" : "Cols et Sommets",
-        "Petit patrimoine" : "Histoire et culture",
-        "Col" : "Cols et Sommets",
-        "Histoire" : "Histoire et culture",
-        "Sommet" : "Cols et Sommets",
+        "Point de vue" : "Paysage",
+        "Petit patrimoine" : "Tradition",
+        "Col" : "Col",
+        "Histoire" : "Histoire",
+        "Sommet" : "Paysage",
     },
     "trekking_difficultylevel" : {
-        "Très facile" : "Facile",
+        "Très facile" : "Très facile",
         "Facile" : "Facile",
-        "Intermédiaire" : "Intermédiaire",
+        "Intermédiaire" : "Moyen",
         "Difficile" : "Difficile",
-        "Très difficile" : "Difficile",    
+        "Très difficile" : "Très difficile",
     },
     "trekking_route" : {
         "Boucle" : "Boucle",
         "Aller-retour" : "Aller-retour",
-        "Traversée" : "Traversée",
-        "Itinérance" : "Traversée",
-        "Etape" : "Traversée",
+        "Traversée" : "Itinérance",
+        "Itinérance" : "Itinérance",
+        "Etape" : "Itinérance",
     },
     "trekking_practice" : {
         "VTT" : "VTT",
-        "Pédestre" : "Pédestre",
-        "Vélo" : "Cyclo route",
-        "Raquettes" : "Raquettes",
-        "Cheval" : "Cheval",      
+        "Pédestre" : "Rando à pied",
+        "Vélo" : "VTT",
+        "Raquettes" : "Rando à pied",
+        "Cheval" : "A cheval",
     },
     "common_reservationsystem" : {
         "OpenSystem" : "OpenSystem",
-        "Itinérance" : "Gites de France"
+        "Itinérance" : "Gîtes de France"
     },
 }
