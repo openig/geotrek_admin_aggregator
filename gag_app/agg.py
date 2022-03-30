@@ -12,7 +12,7 @@ def test():
     from django.contrib.gis.geos import GEOSGeometry, WKBWriter
     from datetime import datetime, date
     from gag_app.env import fk_not_integrated, specific, source_cat_to_gag_cat, core_topology, common, list_label_field
-    from gag_app.config.config import API_BASE_URL, AUTHENT_STRUCTURE, SRID, AUTHENT_USER, GAG_BASE_LANGUAGE
+    from gag_app.config.config import API_BASE_URL, AUTHENT_STRUCTURE, SRID, AUTH_USER, GAG_BASE_LANGUAGE
     from gag_app.utils import geom4326_to_wkt, camel_case, get_fk_row, create_topology, get_api_field, deserialize_translated_fields
 
     with transaction.atomic():        
@@ -135,7 +135,7 @@ def test():
                             raise Exception("len(api_labels) !=1 whereas exactly one column amongst {} should exist in {} API route".format(list_label_field, api_main_route))
 
                         old_value = r2[api_label]
-                        new_value = source_cat_to_gag_cat[f_related_table][old_value]
+                        new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][f_related_table][old_value]
                         fk_to_insert[name_field] = new_value
                         setattr(obj_to_insert, fk_field, f.related_model.objects.get(**fk_to_insert))
 
@@ -147,7 +147,7 @@ def test():
                         else:
                             old_value = r[index][api_field]
                         
-                        new_value = source_cat_to_gag_cat[f_related_table][old_value]
+                        new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][f_related_table][old_value]
 
                         fk_to_insert[name_field] = new_value
                         print('fk_to_insert: ', fk_to_insert)
@@ -170,7 +170,7 @@ def test():
                         print('obj_to_insert: ', vars(obj_to_insert))
                         attachment_dict['object_id'] = obj_to_insert.pk
                         attachment_dict['content_type_id'] = ContentType.objects.get(app_label=app_name, model=api_model).id
-                        attachment_dict['creator_id'] = User.objects.get(username=AUTHENT_USER).id
+                        attachment_dict['creator_id'] = User.objects.get(username=AUTH_USER).id
                         
                         mt = guess_type(a['url'], strict=True)[0]
                         if mt is not None and mt.split('/')[0].startswith('image'):

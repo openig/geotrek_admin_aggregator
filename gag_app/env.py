@@ -89,40 +89,118 @@ specific = {
 }
 
 source_cat_to_gag_cat = {
-    "trekking_poitype" : {
-        "Flore" : "Flore",
-        "Faune" : "Faune",
-        "Géologie" : "Géologie",
-        "Architecture" : "Architecture",
-        "Point de vue" : "Paysage",
-        "Petit patrimoine" : "Tradition",
-        "Col" : "Col",
-        "Histoire" : "Histoire",
-        "Sommet" : "Paysage",
+    "PNE" : {
+        "trekking_poitype" : {
+            "Flore" : "Flore",
+            "Faune" : "Faune",
+            "Géologie" : "Géologie",
+            "Architecture" : "Architecture",
+            "Point de vue" : "Paysage",
+            "Petit patrimoine" : "Tradition",
+            "Col" : "Col",
+            "Histoire" : "Histoire",
+            "Sommet" : "Paysage",
+        },
+        "trekking_difficultylevel" : {
+            "Très facile" : "Très facile",
+            "Facile" : "Facile",
+            "Intermédiaire" : "Moyen",
+            "Difficile" : "Difficile",
+            "Très difficile" : "Très difficile",
+        },
+        "trekking_route" : {
+            "Boucle" : "Boucle",
+            "Aller-retour" : "Aller-retour",
+            "Traversée" : "Itinérance",
+            "Itinérance" : "Itinérance",
+            "Etape" : "Itinérance",
+        },
+        "trekking_practice" : {
+            "VTT" : "VTT",
+            "Pédestre" : "Rando à pied",
+            "Vélo" : "VTT",
+            "Raquettes" : "Rando à pied",
+            "Cheval" : "A cheval",
+        },
+        "common_reservationsystem" : {
+            "OpenSystem" : "OpenSystem",
+            "Itinérance" : "Gîtes de France"
+        },
     },
-    "trekking_difficultylevel" : {
-        "Très facile" : "Très facile",
-        "Facile" : "Facile",
-        "Intermédiaire" : "Moyen",
-        "Difficile" : "Difficile",
-        "Très difficile" : "Très difficile",
+    "PNC" : {
+        "trekking_poitype" : {
+            "Flore" : "Flore",
+            "Faune" : "Faune",
+            "Géologie" : "Géologie",
+            "Architecture" : "Architecture",
+            "Point de vue" : "Paysage",
+            "Petit patrimoine" : "Tradition",
+            "Col" : "Col",
+            "Histoire" : "Histoire",
+            "Sommet" : "Paysage",
+        },
+        "trekking_difficultylevel" : {
+            "Très facile" : "Très facile",
+            "Facile" : "Facile",
+            "Intermédiaire" : "Moyen",
+            "Difficile" : "Difficile",
+            "Très difficile" : "Très difficile",
+        },
+        "trekking_route" : {
+            "Boucle" : "Boucle",
+            "Aller-retour" : "Aller-retour",
+            "Traversée" : "Itinérance",
+            "Itinérance" : "Itinérance",
+            "Etape" : "Itinérance",
+        },
+        "trekking_practice" : {
+            "VTT" : "VTT",
+            "Pédestre" : "Rando à pied",
+            "Vélo" : "VTT",
+            "Raquettes" : "Rando à pied",
+            "Cheval" : "A cheval",
+        },
+        "common_reservationsystem" : {
+            "OpenSystem" : "OpenSystem",
+            "Itinérance" : "Gîtes de France"
+        },
     },
-    "trekking_route" : {
-        "Boucle" : "Boucle",
-        "Aller-retour" : "Aller-retour",
-        "Traversée" : "Itinérance",
-        "Itinérance" : "Itinérance",
-        "Etape" : "Itinérance",
-    },
-    "trekking_practice" : {
-        "VTT" : "VTT",
-        "Pédestre" : "Rando à pied",
-        "Vélo" : "VTT",
-        "Raquettes" : "Rando à pied",
-        "Cheval" : "A cheval",
-    },
-    "common_reservationsystem" : {
-        "OpenSystem" : "OpenSystem",
-        "Itinérance" : "Gîtes de France"
-    },
+    "CD48" : {
+        "trekking_poitype" : {
+            "Flore" : "Flore",
+            "Faune" : "Faune",
+            "Géologie" : "Géologie",
+            "Architecture" : "Architecture",
+            "Point de vue" : "Paysage",
+            "Petit patrimoine" : "Tradition",
+            "Col" : "Col",
+            "Histoire" : "Histoire",
+            "Sommet" : "Paysage",
+        },
+        "trekking_difficultylevel" : {
+            "Très facile" : "Très facile",
+            "Facile" : "Facile",
+            "Intermédiaire" : "Moyen",
+            "Difficile" : "Difficile",
+            "Très difficile" : "Très difficile",
+        },
+        "trekking_route" : {
+            "Boucle" : "Boucle",
+            "Aller-retour" : "Aller-retour",
+            "Traversée" : "Itinérance",
+            "Itinérance" : "Itinérance",
+            "Etape" : "Itinérance",
+        },
+        "trekking_practice" : {
+            "VTT" : "VTT",
+            "Pédestre" : "Rando à pied",
+            "Vélo" : "VTT",
+            "Raquettes" : "Rando à pied",
+            "Cheval" : "A cheval",
+        },
+        "common_reservationsystem" : {
+            "OpenSystem" : "OpenSystem",
+            "Itinérance" : "Gîtes de France"
+        },
+    },    
 }
