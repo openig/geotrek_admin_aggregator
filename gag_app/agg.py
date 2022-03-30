@@ -1,27 +1,8 @@
-from tkinter import E
 import requests
 from geotrek.trekking.models import Trek, POI, POIType, Route, Practice, DifficultyLevel
 from geotrek.core.models import Topology
 from geotrek.authent.models import Structure
 from config.config import API_BASE_URL, GAG_BASE_LANGUAGE
-
-
-def fetch_api(API_BASE_URL):
-    url = API_BASE_URL + "poi_type/15"
-
-    print("Fetching API...")
-    response = requests.get(url)
-    r = response.json()#["results"]
-    print(r)
-
-    newPoiType = POIType.objects.create(label=r["label"][GAG_BASE_LANGUAGE])
-    newPoiType.save()
-
-
-def get_name_trek(identifiant):
-    trek = Trek.objects.get(id=identifiant)
-    trek_name = trek.name_fr
-    print(trek_name)
 
 def test():
     from django.apps import apps
@@ -48,9 +29,9 @@ def test():
             
             app_name = ContentType.objects.get(model = model_name.lower()).app_label
             print('app_name: ', app_name)
-            model = apps.get_model(app_name, model_name)
-            print('model: ', model)
-            all_fields = model._meta.get_fields(include_parents = False) # toutes les colonnes du modèle
+            current_model = apps.get_model(app_name, model_name)
+            print('current_model: ', current_model)
+            all_fields = current_model._meta.get_fields(include_parents = False) # toutes les colonnes du modèle
             print('all_fields: ', all_fields)
 
             fkeys_fields = [f for f in all_fields if f.many_to_one]
@@ -90,7 +71,7 @@ def test():
 
                         print(fk_to_insert)
                         #obj_to_insert.topo_object = Topology(**fk_to_insert)
-                        #obj_to_insert = model.objects.create(**fk_to_insert)
+                        #obj_to_insert = current_model.objects.create(**fk_to_insert)
                         # dict_to_insert['topo_object'] = new_topo
                         # print(dict_to_insert['topo_object'])
                         dict_to_insert = fk_to_insert
@@ -108,7 +89,7 @@ def test():
                         dict_to_insert[f_name] = common['default_values'][f_name]
                 
                 # print('dict_to_insert: ', vars(dict_to_insert['topo_object']))
-                obj_to_insert = model(**dict_to_insert)
+                obj_to_insert = current_model(**dict_to_insert)
                 print(vars(obj_to_insert))
                 
                 for f in fkeys_fields:
