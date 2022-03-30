@@ -54,7 +54,7 @@ def test():
                     obj_content_type = ContentType.objects.get_for_model(f.related_model)
                     f_related_table = obj_content_type.app_label + '_' + obj_content_type.model
            
-                    if f_related_table == 'core_topology':
+                    if f_related_table == 'core_topology' and r[index]['geometry'] is not None:
                         print(model_name, ': topology exists')
                         fk_to_insert['kind'] = api_model.upper()
 
@@ -70,7 +70,7 @@ def test():
                             elif ctf_name in core_topology['default_values']:
                                 fk_to_insert[ctf_name] = core_topology['default_values'][ctf_name]
 
-                        print(fk_to_insert)
+                        print('fk_to_insert: ', fk_to_insert)
                         #obj_to_insert.topo_object = Topology(**fk_to_insert)
                         #obj_to_insert = current_model.objects.create(**fk_to_insert)
                         # dict_to_insert['topo_object'] = new_topo
@@ -91,10 +91,10 @@ def test():
                 
                 # print('dict_to_insert: ', vars(dict_to_insert['topo_object']))
                 obj_to_insert = current_model(**dict_to_insert)
-                print(vars(obj_to_insert))
+                print('obj_to_insert: ', vars(obj_to_insert))
                 
                 for f in fkeys_fields:
-                    print(f)
+                    print('f: ', f)
                     fk_to_insert = {}
                     obj_content_type = ContentType.objects.get_for_model(f.related_model)
                     f_related_table = obj_content_type.app_label + '_' + obj_content_type.model
@@ -153,7 +153,7 @@ def test():
                         print('fk_to_insert: ', fk_to_insert)
                         setattr(obj_to_insert, fk_field, f.related_model.objects.get(**fk_to_insert))
 
-                print(vars(obj_to_insert))
+                print('obj_to_insert: ', vars(obj_to_insert))
                 obj_to_insert.save()
 
                 if 'attachments' in r[index] and len(r[index]['attachments']) > 0:
@@ -187,9 +187,6 @@ def test():
 
                         attachment_to_add = Attachment(**attachment_dict)
                         obj_to_insert.attachments.add(attachment_to_add, bulk=False)
-                        print(vars(obj_to_insert))
-
-
 
                 print("{} object n°{} inserted!".format(api_model, index))
 
