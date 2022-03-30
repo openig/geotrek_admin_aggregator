@@ -1,8 +1,9 @@
 import requests
+from mimetypes import guess_type
 from geotrek.trekking.models import Trek, POI, POIType, Route, Practice, DifficultyLevel
 from geotrek.core.models import Topology
-from geotrek.authent.models import Structure
-from config.config import API_BASE_URL, GAG_BASE_LANGUAGE
+from geotrek.common.models import FileType, Attachment
+from geotrek.authent.models import Structure, User
 
 def test():
     from django.apps import apps
@@ -11,7 +12,7 @@ def test():
     from django.contrib.gis.geos import GEOSGeometry, WKBWriter
     from datetime import datetime, date
     from gag_app.env import fk_not_integrated, specific, source_cat_to_gag_cat, core_topology, common, list_label_field
-    from config.config import API_BASE_URL, AUTHENT_STRUCTURE, SRID
+    from gag_app.config.config import API_BASE_URL, AUTHENT_STRUCTURE, SRID, AUTHENT_USER, GAG_BASE_LANGUAGE
     from gag_app.utils import geom4326_to_wkt, camel_case, get_fk_row, create_topology, get_api_field, deserialize_translated_fields
 
     with transaction.atomic():        
@@ -27,7 +28,7 @@ def test():
             response = requests.get(url)
             r = response.json()["results"]
             
-            app_name = ContentType.objects.get(model = model_name.lower()).app_label
+            app_name = ContentType.objects.get(model = api_model).app_label
             print('app_name: ', app_name)
             current_model = apps.get_model(app_name, model_name)
             print('current_model: ', current_model)
@@ -154,6 +155,42 @@ def test():
 
                 print(vars(obj_to_insert))
                 obj_to_insert.save()
+
+                if 'attachments' in r[index] and len(r[index]['attachments']) > 0:
+                    for a in r[index]['attachments']:
+                        attachment_dict = {}
+
+                        for db_name, api_field in common['attachments'].items():
+                            attachment_dict[db_name] = a[api_field]
+                        for db_name, default_value in common['default_values'].items():
+                            if db_name in a:
+                                attachment_dict[db_name] = default_value
+                        
+                        print('obj_to_insert.pk: ', obj_to_insert.pk)
+                        print('obj_to_insert: ', vars(obj_to_insert))
+                        attachment_dict['object_id'] = obj_to_insert.pk
+                        attachment_dict['content_type_id'] = ContentType.objects.get(app_label=app_name, model=api_model).id
+                        attachment_dict['creator_id'] = User.objects.get(username=AUTHENT_USER).id
+                        
+                        mt = guess_type(a['url'], strict=True)[0]
+                        if mt is not None and mt.split('/')[0].startswith('image'):
+                            attachment_dict['filetype_id'] = FileType.objects.get(type='Photographie').id
+                            attachment_dict['is_image'] = True
+                        elif a['type'] == 'video':
+                            attachment_dict['filetype_id'] = FileType.objects.get(type='Vidéo').id
+                            attachment_dict['is_image'] = False                            
+                        else:
+                            print(a)
+                            print('mimetype: ', mt)
+                            raise Exception('Filetype not recognized')
+
+
+                        attachment_to_add = Attachment(**attachment_dict)
+                        obj_to_insert.attachments.add(attachment_to_add, bulk=False)
+                        print(vars(obj_to_insert))
+
+
+
                 print("{} object n°{} inserted!".format(api_model, index))
 
 test()

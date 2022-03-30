@@ -1,4 +1,4 @@
-from config.config import GAG_BASE_LANGUAGE, AUTHENT_STRUCTURE
+from gag_app.config.config import GAG_BASE_LANGUAGE, AUTHENT_STRUCTURE
 
 list_label_field = ['label', 'name', 'type', 'route', 'organism', 'difficulty', 'network']
 
@@ -27,9 +27,19 @@ common = {
         "published",
         "ratings_description",
     ],
+    "attachments" : {
+        "attachment_file" : "url",
+        "author" : "author",
+        "title" : "title",
+        "legend" : "legend",
+        "uuid" : "uuid",
+    },
     "default_values" : {
         "review" : False,
-    }
+        "attachment_video" : "",
+        "attachment_link" : "",
+        "marque" : False,
+    },
 }
 
 core_topology = {

@@ -3,7 +3,7 @@ import json
 from flask import current_app
 from flask.cli import with_appcontext
 from gag.app import DB
-from config.config import GAG_BASE_LANGUAGE
+from gag_app.config.config import GAG_BASE_LANGUAGE
 from gag.utils import deserialize_translated_fields
 #from gag.codegen import CoreNetwork
 
@@ -14,7 +14,7 @@ def test():
     import gag.models as models
     # from gag.models import CoreTopology, TrekkingPoi, TrekkingPoitype, AuthentStructure, TrekkingTrek, TrekkingDifficultylevel, TrekkingRoute, TrekkingPractice, CommonReservationsystem
     from gag.env import fk_not_integrated, specific, source_cat_to_gag_cat, core_topology, common, list_label_field
-    from config.config import API_BASE_URL, AUTHENT_STRUCTURE
+    from gag_app.config.config import API_BASE_URL, AUTHENT_STRUCTURE
     from gag.utils import geom4326_to_wkt, camel_case, get_fk_row, create_topology, get_api_field
     from sqlalchemy import inspect
     import requests
