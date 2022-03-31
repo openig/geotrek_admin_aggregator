@@ -10,7 +10,6 @@ def test():
     from django.db import transaction
     from django.contrib.contenttypes.models import ContentType
     from django.contrib.gis.geos import GEOSGeometry, WKBWriter
-    from datetime import datetime, date
     from gag_app.env import fk_not_integrated, specific, source_cat_to_gag_cat, core_topology, common, list_label_field
     from gag_app.config.config import API_BASE_URL, AUTHENT_STRUCTURE, SRID, AUTH_USER, GAG_BASE_LANGUAGE
     from gag_app.utils import geom4326_to_wkt, camel_case, get_fk_row, create_topology, get_api_field, deserialize_translated_fields
@@ -24,9 +23,17 @@ def test():
             api_model = model_name.lower() # ex: Trek => trek
             url = API_BASE_URL + api_model
 
+            print("Checking API version...")
+            version = requests.get(url + 'version')['version']
+            print("API version is: {}".format(version))
+
             print("Fetching API...")
-            response = requests.get(url)
-            r = response.json()["results"]
+            response = requests.get(url).json()
+            r = response["results"]
+
+            while response["next"] is not None:
+                response = requests.get(response["next"]).json()
+                r.extend(response["results"])
             
             app_name = ContentType.objects.get(model = api_model).app_label
             print('app_name: ', app_name)
@@ -182,12 +189,12 @@ def test():
                         else:
                             print(a)
                             print('mimetype: ', mt)
-                            raise Exception('Filetype not recognized')
-
+                            attachment_dict['filetype_id'] = FileType.objects.get(type='Autre').id
+                            attachment_dict['is_image'] = False
 
                         attachment_to_add = Attachment(**attachment_dict)
                         obj_to_insert.attachments.add(attachment_to_add, bulk=False)
 
-                print("{} object n°{} inserted!".format(api_model, index))
+                print("{} object n°{} inserted!".format(api_model, index+1))
 
 test()

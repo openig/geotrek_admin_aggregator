@@ -70,11 +70,14 @@ fk_not_integrated = {
         "api_field" : "reservation_system",
         "api_main_route" : "reservationsystem",
     },
+    "trekking_poitype": {
+        "api_field" : "type",
+        "api_main_route" : "poi_type",
+    },
 }
 
 specific = {
     "POI" : {
-        "type" : ["type_label", GAG_BASE_LANGUAGE],
     },
     "Trek" : {
         "accessibility_infrastructure" : ["disabled_infrastructure", GAG_BASE_LANGUAGE],
@@ -202,5 +205,50 @@ source_cat_to_gag_cat = {
             "OpenSystem" : "OpenSystem",
             "Gites de France" : "Gîtes de France"
         },
-    },    
+    },
+    "PNRGCA" : {
+        "trekking_poitype" : {
+            "Flore" : "Flore",
+            "Faune" : "Faune",
+            "Géologie" : "Géologie",
+            "Architecture" : "Architecture",
+            "Histoire et patrimoine" : "Histoire",
+            "Archéologie" : "Archéologie",
+            "Agropastoralisme" : "Pastoralisme",
+            "Savoir-faire" : "Savoir-faire",
+            "Dolmen" : "Tradition",
+            "Installation artistique" : "Paysage",
+            "Petit patrimoine" : "Architecture",
+            "Point de vue" : "Paysage",
+            "Statue-menhir" : "Tradition",
+        },
+        "trekking_difficultylevel" : {
+            "Très facile" : "Très facile",
+            "Facile" : "Facile",
+            "Moyen" : "Moyen",
+            "Difficile" : "Difficile",
+            "Très difficile" : "Très difficile",
+        },
+        "trekking_route" : {
+            "Boucle" : "Boucle",
+            "Aller-retour" : "Aller-retour",
+            "Etape" : "Itinérance",
+            "Séjour itinérant" : "Itinérance",
+            "Descente" : "Boucle",
+            "Montée" : "Boucle",
+        },
+        "trekking_practice" : {
+            "VTT" : "VTT",
+            "Cyclo" : "VTT",
+            "Pédestre" : "Rando à pied",
+            "Raquettes" : "Rando à pied",
+            "Equestre" : "A cheval",
+            "Canoë" : "A cheval",
+            "Trail" : "Rando à pied",
+            "Gravel" : "VTT",
+            "Enduro VTT" : "VTT",
+        },
+        "common_reservationsystem" : {
+        },
+    },
 }
