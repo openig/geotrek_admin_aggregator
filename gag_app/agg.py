@@ -11,28 +11,28 @@ def test():
     from django.contrib.contenttypes.models import ContentType
     from django.contrib.gis.geos import GEOSGeometry, WKBWriter
     from gag_app.env import fk_not_integrated, specific, source_cat_to_gag_cat, core_topology, common, list_label_field
-    from gag_app.config.config import API_BASE_URL, AUTHENT_STRUCTURE, SRID, AUTH_USER, GAG_BASE_LANGUAGE
+    from gag_app.config.config import API_BASE_URL, AUTHENT_STRUCTURE, SRID, AUTH_USER, GAG_BASE_LANGUAGE, PORTALS
     from gag_app.utils import geom4326_to_wkt, camel_case, get_fk_row, create_topology, get_api_field, deserialize_translated_fields
 
     with transaction.atomic():        
-        print("Inspecting...")
         coretopology_fields = Topology._meta.get_fields()
 
         for model_name, model_specifics in specific.items():
 
             api_model = model_name.lower() # ex: Trek => trek
             url = API_BASE_URL + api_model
+            params = {"portals" : PORTALS}
 
             print("Checking API version...")
-            version = requests.get(url + 'version')['version']
+            version = requests.get(API_BASE_URL + 'version').json()['version']
             print("API version is: {}".format(version))
 
             print("Fetching API...")
-            response = requests.get(url).json()
+            response = requests.get(url, params = params).json()
             r = response["results"]
 
             while response["next"] is not None:
-                response = requests.get(response["next"]).json()
+                response = requests.get(response["next"], params = params).json()
                 r.extend(response["results"])
             
             app_name = ContentType.objects.get(model = api_model).app_label
@@ -87,14 +87,15 @@ def test():
                 for f in normal_fields:
                     f_name = f.name
                     print('f_name: ', f_name)
-                    if f_name in model_specifics:
-                        dict_to_insert = get_api_field(r, index, f_name, model_specifics, dict_to_insert)
-                    elif f_name in common['db_column_api_field']:
-                        dict_to_insert = get_api_field(r, index, f_name, common['db_column_api_field'], dict_to_insert)
-                    elif f_name in common['languages']:
-                        dict_to_insert = deserialize_translated_fields(r[index], f_name, dict_to_insert, normal_fields)
-                    elif f_name in common['default_values']:
-                        dict_to_insert[f_name] = common['default_values'][f_name]
+                    if f_name in r[index]:
+                        if f_name in model_specifics:
+                            dict_to_insert = get_api_field(r, index, f_name, model_specifics, dict_to_insert)
+                        elif f_name in common['db_column_api_field']:
+                            dict_to_insert = get_api_field(r, index, f_name, common['db_column_api_field'], dict_to_insert)
+                        elif f_name in common['languages']:
+                            dict_to_insert = deserialize_translated_fields(r[index], f_name, dict_to_insert, normal_fields)
+                        elif f_name in common['default_values']:
+                            dict_to_insert[f_name] = common['default_values'][f_name]
                 
                 # print('dict_to_insert: ', vars(dict_to_insert['topo_object']))
                 obj_to_insert = current_model(**dict_to_insert)
@@ -185,7 +186,8 @@ def test():
                             attachment_dict['is_image'] = True
                         elif a['type'] == 'video':
                             attachment_dict['filetype_id'] = FileType.objects.get(type='Vidéo').id
-                            attachment_dict['is_image'] = False                            
+                            attachment_dict['is_image'] = False
+                            attachment_dict['attachment_video'] = attachment_dict['attachment_link']
                         else:
                             print(a)
                             print('mimetype: ', mt)
