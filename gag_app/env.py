@@ -28,7 +28,6 @@ common = {
         "ratings_description",
     ],
     "attachments" : {
-        "attachment_link" : "url",
         "author" : "author",
         "title" : "title",
         "legend" : "legend",
@@ -38,6 +37,7 @@ common = {
         "review" : False,
         "attachment_video" : "",
         "attachment_file" : "",
+        "attachment_link" : "",
         "marque" : False,
     },
 }

@@ -1,11 +1,15 @@
 import requests
+import os
+import urllib.request
 from mimetypes import guess_type
 from geotrek.trekking.models import Trek, POI, POIType, Route, Practice, DifficultyLevel
 from geotrek.core.models import Topology
 from geotrek.common.models import FileType, Attachment
 from geotrek.authent.models import Structure, User
+from os.path import join
+from django.conf import settings
 
-def test():
+def agg():
     from django.apps import apps
     from django.db import transaction
     from django.contrib.contenttypes.models import ContentType
@@ -182,12 +186,24 @@ def test():
                         
                         mt = guess_type(a['url'], strict=True)[0]
                         if mt is not None and mt.split('/')[0].startswith('image'):
+                            attachment_name = a['url'].rpartition('/')[2]
+                            folder_name = 'paperclip/' + app_name + '_' + api_model
+                            pk = str(obj_to_insert.pk)
+
                             attachment_dict['filetype_id'] = FileType.objects.get(type='Photographie').id
                             attachment_dict['is_image'] = True
+                            attachment_dict['attachment_file'] = os.path.join(folder_name, pk, attachment_name)
+
+                            full_filename = os.path.join(settings.MEDIA_ROOT, attachment_dict['attachment_file'])
+                            # create folder if it doesn't exist
+                            os.makedirs(os.path.dirname(full_filename), exist_ok=True)
+                            print(f"Downloading {a['url']} to {full_filename}")
+                            urllib.request.urlretrieve(a['url'], full_filename)
+
                         elif a['type'] == 'video':
                             attachment_dict['filetype_id'] = FileType.objects.get(type='Vidéo').id
                             attachment_dict['is_image'] = False
-                            attachment_dict['attachment_video'] = attachment_dict['attachment_link']
+                            attachment_dict['attachment_video'] = a['url']
                         else:
                             print(a)
                             print('mimetype: ', mt)
@@ -195,8 +211,9 @@ def test():
                             attachment_dict['is_image'] = False
 
                         attachment_to_add = Attachment(**attachment_dict)
-                        obj_to_insert.attachments.add(attachment_to_add, bulk=False)
+                        obj_to_insert.attachments.add(attachment_to_add, bulk=False)                        
 
-                print("{} object n°{} inserted!".format(api_model, index+1))
 
-test()
+                print("\n{} OBJECT N°{} INSERTED!\n".format(api_model.upper(), index+1))
+
+agg()
