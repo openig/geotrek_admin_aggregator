@@ -55,7 +55,7 @@ def agg():
             normal_fields = [f for f in all_fields if f.is_relation is False]
 
             print('normal_fields: ', normal_fields)
-
+            
             for index in range(len(r)):
                 dict_to_insert = {}
 

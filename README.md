@@ -56,6 +56,8 @@ Dans un terminal, lancer la commande `geotrek import GeotrekAdminAggregatorParse
 
 ## Fonctionnement
 
+Le fichier `env.py` fait office d'instructions de traitement des champs issus de l'API pour l'application. Différentes opérations sont effectuées selon la catégorie de variables 
+
 
 &nbsp;
 <p align="middle">
