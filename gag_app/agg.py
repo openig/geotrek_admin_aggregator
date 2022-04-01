@@ -198,7 +198,13 @@ def agg():
                             # create folder if it doesn't exist
                             os.makedirs(os.path.dirname(full_filename), exist_ok=True)
                             print(f"Downloading {a['url']} to {full_filename}")
-                            urllib.request.urlretrieve(a['url'], full_filename)
+
+                            attachment_response = requests.get(a['url'])
+                            if attachment_response.status_code == 200:
+                                urllib.request.urlretrieve(a['url'], full_filename)
+                            else:
+                                print("Error {} for {}".format(attachment_response.status_code, a['url']))
+
 
                         elif a['type'] == 'video':
                             attachment_dict['filetype_id'] = FileType.objects.get(type='Vidéo').id
