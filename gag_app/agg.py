@@ -1,6 +1,7 @@
 import requests
 import os
 import urllib.request
+from time import perf_counter
 from mimetypes import guess_type
 from geotrek.trekking.models import Trek, POI, POIType, Route, Practice, DifficultyLevel
 from geotrek.core.models import Topology
@@ -8,10 +9,9 @@ from geotrek.common.models import FileType, Attachment
 from geotrek.authent.models import Structure, User
 from os.path import join
 from django.conf import settings
-import time
 
 def agg():
-    tic = time.perf_counter()
+    tic = perf_counter()
     from django.apps import apps
     from django.db import transaction
     from django.contrib.contenttypes.models import ContentType
@@ -31,15 +31,23 @@ def agg():
 
             api_model = model_name.lower() # ex: Trek => trek
             url = API_BASE_URL + api_model
-            params = {"portals" : PORTALS}
+            params = {}
+            if PORTALS:
+                portals_response = requests.get(API_BASE_URL + 'portal', params = {'fields' : 'id,name'}).json()['results']
+                print('portals_response: ', portals_response)
+                portal_ids = [p['id'] for p in portals_response if p['name'] in PORTALS]
+                portal_params = ','.join(str(id) for id in portal_ids)
+                params = {"portals" : portal_params}
 
             print("Fetching API...")
-            response = requests.get(url, params = params).json()
-            r = response["results"]
+            response = requests.get(url, params = params)
+            print (response.url)
+            r = response.json()["results"]
 
-            while response["next"] is not None:
-                response = requests.get(response["next"], params = params).json()
-                r.extend(response["results"])
+            while response.json()["next"] is not None:
+                response = requests.get(response.json()["next"], params = params)
+                r.extend(response.json()["results"])
+            print(r)
             
             app_name = ContentType.objects.get(model = api_model).app_label
             print('app_name: ', app_name)
@@ -240,8 +248,8 @@ def agg():
 
 
                 print("\n{} OBJECT N°{} INSERTED!\n".format(api_model.upper(), index+1))
-    
-    toc = time.perf_counter()
+
+    toc = perf_counter()
     print(f"Performed aggregation in {toc - tic:0.4f} seconds")
 
 agg()
