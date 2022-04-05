@@ -26,20 +26,28 @@ def agg():
         print("Checking API version...")
         version = requests.get(API_BASE_URL + 'version').json()['version']
         print("API version is: {}".format(version))
-        
+
         for model_name, model_specifics in specific.items():
 
             api_model = model_name.lower() # ex: Trek => trek
             url = API_BASE_URL + api_model
-            params = {"portals" : PORTALS}
+            params = {}
+            if PORTALS:
+                portals_response = requests.get(API_BASE_URL + 'portal', params = {'fields' : 'id,name'}).json()['results']
+                print('portals_response: ', portals_response)
+                portal_ids = [p['id'] for p in portals_response if p['name'] in PORTALS]
+                portal_params = ','.join(str(id) for id in portal_ids)
+                params = {"portals" : portal_params}
 
             print("Fetching API...")
-            response = requests.get(url, params = params).json()
-            r = response["results"]
+            response = requests.get(url, params = params)
+            print (response.url)
+            r = response.json()["results"]
 
-            while response["next"] is not None:
-                response = requests.get(response["next"], params = params).json()
-                r.extend(response["results"])
+            while response.json()["next"] is not None:
+                response = requests.get(response.json()["next"], params = params)
+                r.extend(response.json()["results"])
+            print(r)
             
             app_name = ContentType.objects.get(model = api_model).app_label
             print('app_name: ', app_name)
