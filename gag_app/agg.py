@@ -1,6 +1,7 @@
 import requests
 import os
 import urllib.request
+from time import perf_counter
 from mimetypes import guess_type
 from geotrek.trekking.models import Trek, POI, POIType, Route, Practice, DifficultyLevel
 from geotrek.core.models import Topology
@@ -10,6 +11,7 @@ from os.path import join
 from django.conf import settings
 
 def agg():
+    tic = perf_counter()
     from django.apps import apps
     from django.db import transaction
     from django.contrib.contenttypes.models import ContentType
@@ -21,15 +23,15 @@ def agg():
     with transaction.atomic():        
         coretopology_fields = Topology._meta.get_fields()
 
+        print("Checking API version...")
+        version = requests.get(API_BASE_URL + 'version').json()['version']
+        print("API version is: {}".format(version))
+        
         for model_name, model_specifics in specific.items():
 
             api_model = model_name.lower() # ex: Trek => trek
             url = API_BASE_URL + api_model
             params = {"portals" : PORTALS}
-
-            print("Checking API version...")
-            version = requests.get(API_BASE_URL + 'version').json()['version']
-            print("API version is: {}".format(version))
 
             print("Fetching API...")
             response = requests.get(url, params = params).json()
@@ -221,5 +223,8 @@ def agg():
 
 
                 print("\n{} OBJECT N°{} INSERTED!\n".format(api_model.upper(), index+1))
+
+    toc = perf_counter()
+    print(f"Performed aggregation in {toc - tic:0.4f} seconds")
 
 agg()
