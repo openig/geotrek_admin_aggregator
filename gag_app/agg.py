@@ -200,55 +200,55 @@ def agg():
                 print('obj_to_insert: ', vars(obj_to_insert))
                 obj_to_insert.save()
 
-                # if 'attachments' in r[index] and len(r[index]['attachments']) > 0:
-                #     for a in r[index]['attachments']:
-                #         attachment_dict = {}
+                if 'attachments' in r[index] and len(r[index]['attachments']) > 0:
+                    for a in r[index]['attachments']:
+                        attachment_dict = {}
 
-                #         for db_name, api_field in common['attachments'].items():
-                #             attachment_dict[db_name] = a[api_field]
-                #         for db_name, default_value in common['default_values'].items():
-                #             if db_name in a:
-                #                 attachment_dict[db_name] = default_value
+                        for db_name, api_field in common['attachments'].items():
+                            attachment_dict[db_name] = a[api_field]
+                        for db_name, default_value in common['default_values'].items():
+                            if db_name in a:
+                                attachment_dict[db_name] = default_value
                         
-                #         print('obj_to_insert.pk: ', obj_to_insert.pk)
-                #         print('obj_to_insert: ', vars(obj_to_insert))
-                #         attachment_dict['object_id'] = obj_to_insert.pk
-                #         attachment_dict['content_type_id'] = ContentType.objects.get(app_label=app_name, model=api_model).id
-                #         attachment_dict['creator_id'] = User.objects.get(username=AUTH_USER).id
+                        print('obj_to_insert.pk: ', obj_to_insert.pk)
+                        print('obj_to_insert: ', vars(obj_to_insert))
+                        attachment_dict['object_id'] = obj_to_insert.pk
+                        attachment_dict['content_type_id'] = ContentType.objects.get(app_label=app_name, model=api_model).id
+                        attachment_dict['creator_id'] = User.objects.get(username=AUTH_USER).id
                         
-                #         mt = guess_type(a['url'], strict=True)[0]
-                #         if mt is not None and mt.split('/')[0].startswith('image'):
-                #             attachment_name = a['url'].rpartition('/')[2]
-                #             folder_name = 'paperclip/' + app_name + '_' + api_model
-                #             pk = str(obj_to_insert.pk)
+                        mt = guess_type(a['url'], strict=True)[0]
+                        if mt is not None and mt.split('/')[0].startswith('image'):
+                            attachment_name = a['url'].rpartition('/')[2]
+                            folder_name = 'paperclip/' + app_name + '_' + api_model
+                            pk = str(obj_to_insert.pk)
 
-                #             attachment_dict['filetype_id'] = FileType.objects.get(type='Photographie').id
-                #             attachment_dict['is_image'] = True
-                #             attachment_dict['attachment_file'] = os.path.join(folder_name, pk, attachment_name)
+                            attachment_dict['filetype_id'] = FileType.objects.get(type='Photographie').id
+                            attachment_dict['is_image'] = True
+                            attachment_dict['attachment_file'] = os.path.join(folder_name, pk, attachment_name)
 
-                #             full_filename = os.path.join(settings.MEDIA_ROOT, attachment_dict['attachment_file'])
-                #             # create folder if it doesn't exist
-                #             os.makedirs(os.path.dirname(full_filename), exist_ok=True)
-                #             print(f"Downloading {a['url']} to {full_filename}")
+                            full_filename = os.path.join(settings.MEDIA_ROOT, attachment_dict['attachment_file'])
+                            # create folder if it doesn't exist
+                            os.makedirs(os.path.dirname(full_filename), exist_ok=True)
+                            print(f"Downloading {a['url']} to {full_filename}")
 
-                #             attachment_response = requests.get(a['url'])
-                #             if attachment_response.status_code == 200:
-                #                 urllib.request.urlretrieve(a['url'], full_filename)
-                #             else:
-                #                 print("Error {} for {}".format(attachment_response.status_code, a['url']))
+                            attachment_response = requests.get(a['url'])
+                            if attachment_response.status_code == 200:
+                                urllib.request.urlretrieve(a['url'], full_filename)
+                            else:
+                                print("Error {} for {}".format(attachment_response.status_code, a['url']))
 
-                #         elif a['type'] == 'video':
-                #             attachment_dict['filetype_id'] = FileType.objects.get(type='Vidéo').id
-                #             attachment_dict['is_image'] = False
-                #             attachment_dict['attachment_video'] = a['url']
-                #         else:
-                #             print(a)
-                #             print('mimetype: ', mt)
-                #             attachment_dict['filetype_id'] = FileType.objects.get(type='Autre').id
-                #             attachment_dict['is_image'] = False
+                        elif a['type'] == 'video':
+                            attachment_dict['filetype_id'] = FileType.objects.get(type='Vidéo').id
+                            attachment_dict['is_image'] = False
+                            attachment_dict['attachment_video'] = a['url']
+                        else:
+                            print(a)
+                            print('mimetype: ', mt)
+                            attachment_dict['filetype_id'] = FileType.objects.get(type='Autre').id
+                            attachment_dict['is_image'] = False
 
-                #         attachment_to_add = Attachment(**attachment_dict)
-                #         obj_to_insert.attachments.add(attachment_to_add, bulk=False)                        
+                        attachment_to_add = Attachment(**attachment_dict)
+                        obj_to_insert.attachments.add(attachment_to_add, bulk=False)                        
 
 
                 print("\n{} OBJECT N°{} INSERTED!\n".format(api_model.upper(), index+1))
