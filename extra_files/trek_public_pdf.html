@@ -1,0 +1,5 @@
+{% extends "trekking/trek_public_pdf.html" %}
+
+    {% block logo %}
+        {% if object.structure.name == 'name1' %}<img src="src1" alt="">{% elif object.structure.name == 'name2' %}<img src="src2" alt="">{% elif object.structure.name == 'name3' %}<img src="src3" alt="">{% endif %}            
+    {% endblock %}
