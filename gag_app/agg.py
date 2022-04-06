@@ -97,6 +97,7 @@ def agg():
             print('normal_fields: ', normal_fields)
             
             for index in range(len(r)):
+                print('r[index]: ', r[index])
                 dict_to_insert = {}
 
                 for f in one_to_one_fields:
@@ -171,15 +172,19 @@ def agg():
                         api_label = fk_not_integrated[f_related_model]['api_label']
                         print('api_label: ', api_label)
                         old_fk_id = r[index][fk_field]
+                        print('old_fk_id: ', old_fk_id)
                         old_value = [cat[api_label] for cat in fk_not_integrated[f_related_model]['data'] if cat['id'] == old_fk_id]
                         
-                        if old_value is not None and len(old_value) == 1:
+                        if not old_value:
+                            print('old_value: ', old_value)
+                            warn('No old_value found')
+                        elif len(old_value) > 1:
+                            print('old_value: ', old_value)
+                            raise Exception('Multiple categories found for given id!')
+                        else:
                             new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][model_name][f_related_model][old_value[0]]
                             fk_to_insert[name_field] = new_value
                             setattr(obj_to_insert, fk_field, f.related_model.objects.get(**fk_to_insert))
-                        elif len(old_value) != 1:
-                            print('old_value: ', old_value)
-                            raise Exception('Multiple categories found for given id!')
 
                     elif fk_field in specific[model_name]["db_column_api_field"]:
                         api_field = specific[model_name]["db_column_api_field"][fk_field]
