@@ -9,6 +9,7 @@ from geotrek.common.models import FileType, Attachment
 from geotrek.authent.models import Structure, User
 from os.path import join
 from django.conf import settings
+from warnings import warn
 
 def agg():
     tic = perf_counter()
@@ -47,7 +48,7 @@ def agg():
             while response.json()["next"] is not None:
                 response = requests.get(response.json()["next"], params = params)
                 r.extend(response.json()["results"])
-            print(r)
+            ##print(r)
             
             app_name = ContentType.objects.get(model = api_model).app_label
             print('app_name: ', app_name)
@@ -63,26 +64,29 @@ def agg():
             for fk_model_name, api_main_route in model_specifics["fk_not_integrated"].items():
                 url = API_BASE_URL + api_main_route
 
+                print(url)
                 params_fk = {"language" : GAG_BASE_LANGUAGE}
 
                 print("Fetching API for related model route...")
                 response_fk = requests.get(url, params = params_fk).json()
                 r_fk = response_fk['results']
-                print('r2:', r_fk)
+                print('r_fk:', r_fk)
 
-                api_labels = [rk for rk in r_fk[0].keys() if rk in list_label_field]
+                if r_fk:
+                    api_labels = [rk for rk in r_fk[0].keys() if rk in list_label_field]
 
-                if len(api_labels) == 1:
-                    api_label = ''.join(api_labels)
-                else:
-                    print('API response keys:', r_fk.keys())
-                    print('api_labels:', api_labels)
-                    raise Exception("len(api_labels) !=1 whereas exactly one column amongst {} should exist in {} API route".format(list_label_field, api_main_route))
+                    if len(api_labels) == 1:
+                        api_label = ''.join(api_labels)
+                    else:
+                        print('API response keys:', r_fk.keys())
+                        print('api_labels:', api_labels)
+                        raise Exception("len(api_labels) !=1 whereas exactly one column amongst {} should exist in {} API route".format(list_label_field, api_main_route))
 
-                print('api_label: ', api_label)
-                fk_not_integrated[fk_model_name] = {}
-                fk_not_integrated[fk_model_name]['data'] = r_fk
-                fk_not_integrated[fk_model_name]['api_label'] = api_label
+                    print('api_label: ', api_label)
+                    fk_not_integrated[fk_model_name] = {}
+                    fk_not_integrated[fk_model_name]['data'] = r_fk
+                    fk_not_integrated[fk_model_name]['api_label'] = api_label
+
             print('fk_not_integrated: ', fk_not_integrated)
 
             #print(fkeys_fields)
@@ -191,60 +195,60 @@ def agg():
                         print('fk_to_insert: ', fk_to_insert)
                         setattr(obj_to_insert, fk_field, f.related_model.objects.get(**fk_to_insert))
                     else:
-                        raise Exception("Related model doesn't conform to any handled possibility.")
+                        warn("Related model doesn't conform to any handled possibility.")
 
                 print('obj_to_insert: ', vars(obj_to_insert))
                 obj_to_insert.save()
 
-                if 'attachments' in r[index] and len(r[index]['attachments']) > 0:
-                    for a in r[index]['attachments']:
-                        attachment_dict = {}
+                # if 'attachments' in r[index] and len(r[index]['attachments']) > 0:
+                #     for a in r[index]['attachments']:
+                #         attachment_dict = {}
 
-                        for db_name, api_field in common['attachments'].items():
-                            attachment_dict[db_name] = a[api_field]
-                        for db_name, default_value in common['default_values'].items():
-                            if db_name in a:
-                                attachment_dict[db_name] = default_value
+                #         for db_name, api_field in common['attachments'].items():
+                #             attachment_dict[db_name] = a[api_field]
+                #         for db_name, default_value in common['default_values'].items():
+                #             if db_name in a:
+                #                 attachment_dict[db_name] = default_value
                         
-                        print('obj_to_insert.pk: ', obj_to_insert.pk)
-                        print('obj_to_insert: ', vars(obj_to_insert))
-                        attachment_dict['object_id'] = obj_to_insert.pk
-                        attachment_dict['content_type_id'] = ContentType.objects.get(app_label=app_name, model=api_model).id
-                        attachment_dict['creator_id'] = User.objects.get(username=AUTH_USER).id
+                #         print('obj_to_insert.pk: ', obj_to_insert.pk)
+                #         print('obj_to_insert: ', vars(obj_to_insert))
+                #         attachment_dict['object_id'] = obj_to_insert.pk
+                #         attachment_dict['content_type_id'] = ContentType.objects.get(app_label=app_name, model=api_model).id
+                #         attachment_dict['creator_id'] = User.objects.get(username=AUTH_USER).id
                         
-                        mt = guess_type(a['url'], strict=True)[0]
-                        if mt is not None and mt.split('/')[0].startswith('image'):
-                            attachment_name = a['url'].rpartition('/')[2]
-                            folder_name = 'paperclip/' + app_name + '_' + api_model
-                            pk = str(obj_to_insert.pk)
+                #         mt = guess_type(a['url'], strict=True)[0]
+                #         if mt is not None and mt.split('/')[0].startswith('image'):
+                #             attachment_name = a['url'].rpartition('/')[2]
+                #             folder_name = 'paperclip/' + app_name + '_' + api_model
+                #             pk = str(obj_to_insert.pk)
 
-                            attachment_dict['filetype_id'] = FileType.objects.get(type='Photographie').id
-                            attachment_dict['is_image'] = True
-                            attachment_dict['attachment_file'] = os.path.join(folder_name, pk, attachment_name)
+                #             attachment_dict['filetype_id'] = FileType.objects.get(type='Photographie').id
+                #             attachment_dict['is_image'] = True
+                #             attachment_dict['attachment_file'] = os.path.join(folder_name, pk, attachment_name)
 
-                            full_filename = os.path.join(settings.MEDIA_ROOT, attachment_dict['attachment_file'])
-                            # create folder if it doesn't exist
-                            os.makedirs(os.path.dirname(full_filename), exist_ok=True)
-                            print(f"Downloading {a['url']} to {full_filename}")
+                #             full_filename = os.path.join(settings.MEDIA_ROOT, attachment_dict['attachment_file'])
+                #             # create folder if it doesn't exist
+                #             os.makedirs(os.path.dirname(full_filename), exist_ok=True)
+                #             print(f"Downloading {a['url']} to {full_filename}")
 
-                            attachment_response = requests.get(a['url'])
-                            if attachment_response.status_code == 200:
-                                urllib.request.urlretrieve(a['url'], full_filename)
-                            else:
-                                print("Error {} for {}".format(attachment_response.status_code, a['url']))
+                #             attachment_response = requests.get(a['url'])
+                #             if attachment_response.status_code == 200:
+                #                 urllib.request.urlretrieve(a['url'], full_filename)
+                #             else:
+                #                 print("Error {} for {}".format(attachment_response.status_code, a['url']))
 
-                        elif a['type'] == 'video':
-                            attachment_dict['filetype_id'] = FileType.objects.get(type='Vidéo').id
-                            attachment_dict['is_image'] = False
-                            attachment_dict['attachment_video'] = a['url']
-                        else:
-                            print(a)
-                            print('mimetype: ', mt)
-                            attachment_dict['filetype_id'] = FileType.objects.get(type='Autre').id
-                            attachment_dict['is_image'] = False
+                #         elif a['type'] == 'video':
+                #             attachment_dict['filetype_id'] = FileType.objects.get(type='Vidéo').id
+                #             attachment_dict['is_image'] = False
+                #             attachment_dict['attachment_video'] = a['url']
+                #         else:
+                #             print(a)
+                #             print('mimetype: ', mt)
+                #             attachment_dict['filetype_id'] = FileType.objects.get(type='Autre').id
+                #             attachment_dict['is_image'] = False
 
-                        attachment_to_add = Attachment(**attachment_dict)
-                        obj_to_insert.attachments.add(attachment_to_add, bulk=False)                        
+                #         attachment_to_add = Attachment(**attachment_dict)
+                #         obj_to_insert.attachments.add(attachment_to_add, bulk=False)                        
 
 
                 print("\n{} OBJECT N°{} INSERTED!\n".format(api_model.upper(), index+1))
