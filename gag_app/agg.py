@@ -23,8 +23,6 @@ def agg():
     from gag_app.config.config import API_BASE_URL, AUTHENT_STRUCTURE, SRID, AUTH_USER, GAG_BASE_LANGUAGE, PORTALS
     from gag_app.utils import geom4326_to_wkt, camel_case, get_fk_row, create_topology, get_api_field, deserialize_translated_fields
 
-    current_aggregation_datetime = datetime.now()
-
     with transaction.atomic():        
         coretopology_fields = Topology._meta.get_fields()
 
