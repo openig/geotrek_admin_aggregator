@@ -11,7 +11,7 @@ class GeotrekAdminAggregatorParser(Parser):
         from os.path import join
         from django.conf import settings
 
-        module_path = join(settings.VAR_DIR, 'conf/geotrek_admin_aggregator/custom_geotrek_shell.py')
-        spec = importlib.util.spec_from_file_location("custom_geotrek_shell", module_path)
+        module_path = join(settings.VAR_DIR, 'conf/gag_app/agg.py')
+        spec = importlib.util.spec_from_file_location("agg", module_path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
