@@ -1,5 +1,5 @@
 def geom4326_to_wkt(data):
-    from config.config import SRID
+    from gag_app.config.config import SRID
     from json import dumps as json_dumps
     from geojson import loads as geojson_loads
     from django.contrib.gis.geos import GEOSGeometry
@@ -50,7 +50,7 @@ def get_api_field(r, index, f_name, value, dict_to_insert):
     return dict_to_insert
 
 def deserialize_translated_fields(r_index, f_name, dict_to_insert, normal_columns):
-    from config.config import GAG_BASE_LANGUAGE
+    from gag_app.config.config import GAG_BASE_LANGUAGE
     from django.conf import settings
     
     languages_gag = settings.MODELTRANSLATION_LANGUAGES
