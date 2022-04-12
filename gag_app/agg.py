@@ -8,6 +8,7 @@ from geotrek.trekking.models import Trek, POI, POIType, Route, Practice, Difficu
 from geotrek.core.models import Topology
 from geotrek.common.models import FileType, Attachment
 from geotrek.authent.models import Structure, User
+from django.core.exceptions import ObjectDoesNotExist
 from os.path import join
 from django.conf import settings
 from warnings import warn
@@ -51,28 +52,37 @@ def agg():
 
             params['fields'] = 'uuid'
             print(f'Fetching API for {api_model} ids...')
-            response = requests.get(url, params=params).json()
-            uuids_list = [r['uuid'] for r in response['results']]
+            response = requests.get(url, params=params)
+            r = response.json()["results"]
+
+            while response.json()["next"] is not None:
+                response = requests.get(response.json()["next"], params=params)
+                r.extend(response.json()["results"])
+
+            uuids_list = [r['uuid'] for r in r]
+
+            params.pop('fields')
 
             print(f"Identifying GAG {api_model}s to delete")
             to_delete_names = []
             to_delete_ids = []
-            for obj in current_model.objects.filter(structure=current_structure).iterator(chunk_size=200):
-                if str(obj.uuid) not in uuids_list:
-                    to_delete_names.append(obj.name)
-                    to_delete_ids.append(obj.topo_object_id)
 
-            objs_to_delete = current_model.objects.filter(topo_object_id__in=to_delete_ids)
-            objs_to_delete.delete()
-            for tdi, tdn in zip(to_delete_ids, to_delete_names):
-                print('{} n°{} deleted: {}'.format(api_model, tdi, tdn))
+            try:
+                for obj in current_model.objects.filter(structure=current_structure).iterator(chunk_size=200):
+                    if str(obj.uuid) not in uuids_list:
+                        print(obj.uuid)
+                        to_delete_names.append(obj.name)
+                        to_delete_ids.append(obj.topo_object_id)
+                objs_to_delete = current_model.objects.filter(topo_object_id__in=to_delete_ids)
+                objs_to_delete.delete()
+                for tdi, tdn in zip(to_delete_ids, to_delete_names):
+                    print('{} n°{} deleted: {}'.format(api_model, tdi, tdn))
 
-            params.pop('fields')
-
-            # TODO : pq earliest et pas latest => changer pour latest
-            last_aggregation_datetime = current_model.objects.filter(structure=current_structure).latest('date_update').date_update
-            print('last_aggregation_datetime: ', last_aggregation_datetime)
-            params['updated_after'] = last_aggregation_datetime.strftime('%Y-%m-%d')
+                last_aggregation_datetime = current_model.objects.filter(structure=current_structure).latest('date_update').date_update
+                print('last_aggregation_datetime: ', last_aggregation_datetime)
+                params['updated_after'] = last_aggregation_datetime.strftime('%Y-%m-%d')
+            except current_model.DoesNotExist:
+                print(f'No data in {current_model} from {current_structure} structure')
 
             print("Fetching API...")
             response = requests.get(url, params=params)
@@ -176,8 +186,8 @@ def agg():
 
                     # print('dict_to_insert: ', vars(dict_to_insert['topo_object']))
                     # obj_to_insert = current_model(**dict_to_insert)
-                    obj_to_insert, created = current_model.objects.update_or_create(uuid=dict_to_insert['uuid'], defaults={**dict_to_insert})
-                    print('obj_to_insert: ', obj_to_insert)
+                    # obj_to_insert, created = current_model.objects.update_or_create(uuid=dict_to_insert['uuid'], defaults={**dict_to_insert})
+                    # print('obj_to_insert: ', obj_to_insert)
 
                     for f in fkeys_fields:
                         print('f: ', f)
@@ -198,7 +208,8 @@ def agg():
                             raise Exception("len(related_model_normal_fields_name) !=1 whereas exactly one field amongst {} should exist in {} model".format(list_label_field, f_related_model))
 
                         if f_related_model == 'Structure':
-                            obj_to_insert.structure = current_structure
+                            dict_to_insert['structure'] = current_structure
+                            #obj_to_insert.structure = current_structure
 
                         elif f_related_model in fk_not_integrated:
                             print('FK_NOT_INTEGRATED')
@@ -217,7 +228,8 @@ def agg():
                             else:
                                 new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][model_name][f_related_model][old_value[0]]
                                 fk_to_insert[name_field] = new_value
-                                setattr(obj_to_insert, fk_field, f.related_model.objects.get(**fk_to_insert))
+                                dict_to_insert[fk_field] = f.related_model.objects.get(**fk_to_insert)
+                                # setattr(obj_to_insert, fk_field, f.related_model.objects.get(**fk_to_insert))
 
                         elif fk_field in specific[model_name]["db_column_api_field"]:
                             api_field = specific[model_name]["db_column_api_field"][fk_field]
@@ -231,9 +243,12 @@ def agg():
 
                             fk_to_insert[name_field] = new_value
                             print('fk_to_insert: ', fk_to_insert)
-                            setattr(obj_to_insert, fk_field, f.related_model.objects.get(**fk_to_insert))
+                            dict_to_insert[fk_field] = f.related_model.objects.get(**fk_to_insert)
+                            # setattr(obj_to_insert, fk_field, f.related_model.objects.get(**fk_to_insert))
                         else:
                             warn("Related model doesn't conform to any handled possibility.")
+
+                    obj_to_insert, created = current_model.objects.update_or_create(uuid=dict_to_insert['uuid'], defaults={**dict_to_insert})
 
                     print('obj_to_insert: ', vars(obj_to_insert))
                     obj_to_insert.save()
@@ -264,16 +279,17 @@ def agg():
                                 attachment_dict['is_image'] = True
                                 attachment_dict['attachment_file'] = os.path.join(folder_name, pk, attachment_name)
 
-                                full_filename = os.path.join(settings.MEDIA_ROOT, attachment_dict['attachment_file'])
+                                full_filepath = os.path.join(settings.MEDIA_ROOT, attachment_dict['attachment_file'])
                                 # create folder if it doesn't exist
-                                os.makedirs(os.path.dirname(full_filename), exist_ok=True)
-                                print(f"Downloading {a['url']} to {full_filename}")
+                                os.makedirs(os.path.dirname(full_filepath), exist_ok=True)
 
                                 attachment_response = requests.get(a['url'])
-                                if attachment_response.status_code == 200:
-                                    urllib.request.urlretrieve(a['url'], full_filename)
-                                else:
-                                    print("Error {} for {}".format(attachment_response.status_code, a['url']))
+                                if not os.path.isfile(full_filepath):
+                                    if attachment_response.status_code == 200:
+                                        print(f"Downloading {a['url']} to {full_filepath}")
+                                        urllib.request.urlretrieve(a['url'], full_filepath)
+                                    else:
+                                        print("Error {} for {}".format(attachment_response.status_code, a['url']))
 
                             elif a['type'] == 'video':
                                 attachment_dict['filetype_id'] = FileType.objects.get(type='Vidéo').id
@@ -285,7 +301,7 @@ def agg():
                                 attachment_dict['filetype_id'] = FileType.objects.get(type='Autre').id
                                 attachment_dict['is_image'] = False
 
-                            attachment_to_add = Attachment(**attachment_dict)
+                            attachment_to_add, created = Attachment.objects.update_or_create(uuid=attachment_dict['uuid'], defaults={**attachment_dict})
                             obj_to_insert.attachments.add(attachment_to_add, bulk=False)
 
 

@@ -1,6 +1,15 @@
 from gag_app.config.config import GAG_BASE_LANGUAGE
 
-list_label_field = ['label', 'name', 'type', 'route', 'organism', 'difficulty', 'network', 'reservation_system']
+list_label_field = [
+    'label',
+    'name',
+    'type',
+    'route',
+    'organism',
+    'difficulty',
+    'network',
+    'reservation_system'
+]
 
 common = {
     "db_column_api_field": {
@@ -62,11 +71,26 @@ specific = {
     },
     "Trek": {
         "db_column_api_field": {
-            "accessibility_infrastructure": ["disabled_infrastructure", GAG_BASE_LANGUAGE],
-            "accessibility_infrastructure_en": ["disabled_infrastructure", "en"],
-            "accessibility_infrastructure_es": ["disabled_infrastructure", "es"],
-            "accessibility_infrastructure_fr": ["disabled_infrastructure", "fr"],
-            "accessibility_infrastructure_it": ["disabled_infrastructure", "it"],
+            "accessibility_infrastructure": [
+                "disabled_infrastructure",
+                GAG_BASE_LANGUAGE
+            ],
+            "accessibility_infrastructure_en": [
+                "disabled_infrastructure",
+                "en"
+            ],
+            "accessibility_infrastructure_es": [
+                "disabled_infrastructure",
+                "es"
+            ],
+            "accessibility_infrastructure_fr": [
+                "disabled_infrastructure",
+                "fr"
+            ],
+            "accessibility_infrastructure_it": [
+                "disabled_infrastructure",
+                "it"
+            ],
             "duration": "duration",
             "eid2": "second_external_id",
             "reservation_id": "reservation_id",
