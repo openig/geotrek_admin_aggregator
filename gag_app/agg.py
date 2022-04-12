@@ -12,6 +12,7 @@ from os.path import join
 from django.conf import settings
 from warnings import warn
 
+
 def agg():
     tic = perf_counter()
     from django.apps import apps
@@ -20,7 +21,7 @@ def agg():
     from django.contrib.contenttypes.models import ContentType
     from django.contrib.gis.geos import GEOSGeometry, WKBWriter
     from gag_app.env import specific, source_cat_to_gag_cat, core_topology, common, list_label_field
-    from gag_app.config.config import API_BASE_URL, AUTHENT_STRUCTURE, SRID, AUTH_USER, GAG_BASE_LANGUAGE, PORTALS
+    from gag_app.config.config import API_BASE_URL, AUTHENT_STRUCTURE, AUTH_USER, GAG_BASE_LANGUAGE, PORTALS
     from gag_app.utils import geom4326_to_wkt, camel_case, get_fk_row, create_topology, get_api_field, deserialize_translated_fields
 
     with transaction.atomic():
@@ -38,15 +39,15 @@ def agg():
             current_model = apps.get_model(app_name, model_name)
             print('current_model: ', current_model)
 
-            api_model = model_name.lower() # ex: Trek => trek
+            api_model = model_name.lower()  # ex: Trek => trek
             url = API_BASE_URL + api_model
             params = {}
             if PORTALS:
-                portals_response = requests.get(API_BASE_URL + 'portal', params = {'fields' : 'id,name'}).json()['results']
+                portals_response = requests.get(API_BASE_URL + 'portal', params={'fields': 'id,name'}).json()['results']
                 print('portals_response: ', portals_response)
                 portal_ids = [p['id'] for p in portals_response if p['name'] in PORTALS]
                 portal_params = ','.join(str(id) for id in portal_ids)
-                params = {'portals' : portal_params}
+                params = {'portals': portal_params}
 
             params['fields'] = 'uuid'
             print(f'Fetching API for {api_model} ids...')
@@ -69,22 +70,22 @@ def agg():
             params.pop('fields')
 
             # TODO : pq earliest et pas latest => changer pour latest
-            last_aggregation_datetime = current_model.objects.filter(structure=current_structure).earliest('date_update').date_update
-            print(last_aggregation_datetime)
+            last_aggregation_datetime = current_model.objects.filter(structure=current_structure).latest('date_update').date_update
+            print('last_aggregation_datetime: ', last_aggregation_datetime)
             params['updated_after'] = last_aggregation_datetime.strftime('%Y-%m-%d')
 
             print("Fetching API...")
-            response = requests.get(url, params = params)
+            response = requests.get(url, params=params)
             print(response.url)
             r = response.json()["results"]
 
             while response.json()["next"] is not None:
-                response = requests.get(response.json()["next"], params = params)
+                response = requests.get(response.json()["next"], params=params)
                 r.extend(response.json()["results"])
             #  print(r)
 
             if r:
-                all_fields = current_model._meta.get_fields(include_parents = False) # toutes les colonnes du modèle
+                all_fields = current_model._meta.get_fields(include_parents=False) # toutes les colonnes du modèle
                 print('all_fields: ', all_fields)
 
                 fkeys_fields = [f for f in all_fields if f.many_to_one]
@@ -140,9 +141,10 @@ def agg():
                             print(model_name, ': topology exists')
                             fk_to_insert['kind'] = api_model.upper()
 
-                            geom = GEOSGeometry(str(r[index]['geometry'])) #default SRID of GEOSGeometry is 4326
-                            geom.transform(SRID)
-                            geom = WKBWriter().write(geom)
+                            geom = GEOSGeometry(str(r[index]['geometry']))  # default SRID of GEOSGeometry is 4326
+                            geom.transform(settings.SRID)
+                            geom = WKBWriter().write(geom)  # drop Z dimension
+                            geom = GEOSGeometry(geom)
                             fk_to_insert['geom'] = geom
 
                             for ctf in coretopology_fields:
@@ -153,8 +155,8 @@ def agg():
                                     fk_to_insert[ctf_name] = core_topology['default_values'][ctf_name]
 
                             print('fk_to_insert: ', fk_to_insert)
-                            #obj_to_insert.topo_object = Topology(**fk_to_insert)
-                            #obj_to_insert = current_model.objects.create(**fk_to_insert)
+                            # obj_to_insert.topo_object = Topology(**fk_to_insert)
+                            # obj_to_insert = current_model.objects.create(**fk_to_insert)
                             # dict_to_insert['topo_object'] = new_topo
                             # print(dict_to_insert['topo_object'])
                             dict_to_insert = fk_to_insert
@@ -173,8 +175,9 @@ def agg():
                                 dict_to_insert[f_name] = common['default_values'][f_name]
 
                     # print('dict_to_insert: ', vars(dict_to_insert['topo_object']))
-                    obj_to_insert = current_model(**dict_to_insert) # current_model.objects.create(**dict_to_insert)
-                    print('obj_to_insert: ', vars(obj_to_insert))
+                    # obj_to_insert = current_model(**dict_to_insert)
+                    obj_to_insert, created = current_model.objects.update_or_create(uuid=dict_to_insert['uuid'], defaults={**dict_to_insert})
+                    print('obj_to_insert: ', obj_to_insert)
 
                     for f in fkeys_fields:
                         print('f: ', f)
