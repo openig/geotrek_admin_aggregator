@@ -20,7 +20,7 @@ Renseigner tous les paramètres :
  - `AUTHENT_STRUCTURE` : Nom de la source des données. Doit correspondre à une entrée dans la table "authent_structure". Indispensable pour la tracabilité des données.
  - `GAG_BASE_LANGUAGE` : langue par défaut de la base de données aggregator
  - `SRID` : SRID du système de coordoonées de la base de données aggregator
- 
+
  Renommer le fichier `config.py.sample` en `config.py`
 
 ### Fichier `env.py`
@@ -56,7 +56,14 @@ Dans un terminal, lancer la commande `geotrek import GeotrekAdminAggregatorParse
 
 ## Fonctionnement
 
-Le fichier `env.py` fait office d'instructions de traitement des champs issus de l'API pour l'application. Différentes opérations sont effectuées selon la catégorie de variables 
+Le fichier `env.py` fait office d'instructions de traitement des champs issus de l'API pour l'application. Différentes opérations sont effectuées selon la catégorie de variables.
+
+Three options for the general functioning:
+ - overload Parser class with redefinition of `parse()` function to call the GAG application present in `var/conf` directory of Geotrek;
+ - modify the Parser class in order to avoid the necessity to have the `url` and `model` variables set in the overload;
+ - create a new command to get rid of parsers structure and redefine everything from scratch.
+
+Option 1 is the current choice.
 
 
 &nbsp;
