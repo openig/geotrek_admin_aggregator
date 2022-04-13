@@ -1,9 +1,10 @@
 from geotrek.common.parsers import Parser
 from geotrek.trekking.models import POIType
 
+
 class GeotrekAdminAggregatorParser(Parser):
     url = 'just_so_its_not_none'
-    model = POIType # Useless but shouldn't be None
+    model = POIType  # Useless but shouldn't be None
 
     def parse(self, filename=None, limit=None):
         import importlib
