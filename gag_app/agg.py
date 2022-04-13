@@ -2,13 +2,11 @@ import requests
 import os
 import urllib.request
 from time import perf_counter
-from datetime import datetime
 from mimetypes import guess_type
 from geotrek.trekking.models import Trek, POI, POIType, Route, Practice, DifficultyLevel
 from geotrek.core.models import Topology
 from geotrek.common.models import FileType, Attachment
 from geotrek.authent.models import Structure, User
-from django.core.exceptions import ObjectDoesNotExist
 from os.path import join
 from django.conf import settings
 from warnings import warn
@@ -18,48 +16,49 @@ def agg():
     tic = perf_counter()
     from django.apps import apps
     from django.db import transaction
-    from django.db.models import Min
     from django.contrib.contenttypes.models import ContentType
     from django.contrib.gis.geos import GEOSGeometry, WKBWriter
     from gag_app.env import specific, source_cat_to_gag_cat, core_topology, common, list_label_field
-    from gag_app.config.config import API_BASE_URL, AUTHENT_STRUCTURE, AUTH_USER, GAG_BASE_LANGUAGE, PORTALS
-    from gag_app.utils import geom4326_to_wkt, camel_case, get_fk_row, create_topology, get_api_field, deserialize_translated_fields
+    from gag_app.config.config import GADMIN_BASE_URL, AUTHENT_STRUCTURE, AUTH_USER, GAG_BASE_LANGUAGE, PORTALS
+    from gag_app.utils import get_api_field, deserialize_translated_fields
 
     with transaction.atomic():
         coretopology_fields = Topology._meta.get_fields()
 
+        api_base_url = f'https://{GADMIN_BASE_URL}/api/v2/'
+
         print("Checking API version...")
-        version = requests.get(API_BASE_URL + 'version').json()['version']
+        version = requests.get(api_base_url + 'version').json()['version']
         print("API version is: {}".format(version))
 
         current_structure = Structure.objects.get(name=AUTHENT_STRUCTURE)
 
         for model_name, model_specifics in specific.items():
-            app_name = ContentType.objects.get(model = model_name.lower()).app_label
+            app_name = ContentType.objects.get(model=model_name.lower()).app_label
             print('app_name: ', app_name)
             current_model = apps.get_model(app_name, model_name)
             print('current_model: ', current_model)
 
             api_model = model_name.lower()  # ex: Trek => trek
-            url = API_BASE_URL + api_model
+            url = api_base_url + api_model
             params = {}
             if PORTALS:
-                portals_response = requests.get(API_BASE_URL + 'portal', params={'fields': 'id,name'}).json()['results']
+                portals_response = requests.get(api_base_url + 'portal', params={'fields': 'id,name'}).json()['results']
                 print('portals_response: ', portals_response)
                 portal_ids = [p['id'] for p in portals_response if p['name'] in PORTALS]
                 portal_params = ','.join(str(id) for id in portal_ids)
                 params = {'portals': portal_params}
 
             params['fields'] = 'uuid'
-            print(f'Fetching API for {api_model} ids...')
+            print(f'Fetching API for {api_model} uuids...')
             response = requests.get(url, params=params)
-            r = response.json()["results"]
+            uuids_response = response.json()["results"]
 
             while response.json()["next"] is not None:
                 response = requests.get(response.json()["next"], params=params)
-                r.extend(response.json()["results"])
+                uuids_response.extend(response.json()["results"])
 
-            uuids_list = [r['uuid'] for r in r]
+            uuids_list = [u['uuid'] for u in uuids_response]
 
             params.pop('fields')
 
@@ -87,15 +86,15 @@ def agg():
             print("Fetching API...")
             response = requests.get(url, params=params)
             print(response.url)
-            r = response.json()["results"]
+            api_data = response.json()["results"]
 
             while response.json()["next"] is not None:
                 response = requests.get(response.json()["next"], params=params)
-                r.extend(response.json()["results"])
-            #  print(r)
+                api_data.extend(response.json()["results"])
+            #  print(api_data)
 
-            if r:
-                all_fields = current_model._meta.get_fields(include_parents=False) # toutes les colonnes du modèle
+            if api_data:
+                all_fields = current_model._meta.get_fields(include_parents=False)  # toutes les colonnes du modèle
                 print('all_fields: ', all_fields)
 
                 fkeys_fields = [f for f in all_fields if f.many_to_one]
@@ -103,13 +102,13 @@ def agg():
 
                 fk_not_integrated = {}
                 for fk_model_name, api_main_route in model_specifics["fk_not_integrated"].items():
-                    url = API_BASE_URL + api_main_route
+                    url = api_base_url + api_main_route
 
                     print(url)
-                    params_fk = {"language" : GAG_BASE_LANGUAGE}
+                    params_fk = {"language": GAG_BASE_LANGUAGE}
 
                     print("Fetching API for related model route...")
-                    response_fk = requests.get(url, params = params_fk).json()
+                    response_fk = requests.get(url, params=params_fk).json()
                     r_fk = response_fk['results']
                     print('r_fk:', r_fk)
 
@@ -130,15 +129,14 @@ def agg():
 
                 print('fk_not_integrated: ', fk_not_integrated)
 
-                #print(fkeys_fields)
+                # print(fkeys_fields)
 
-                pkey_field = [f for f in all_fields if hasattr(f, 'primary_key')]
                 normal_fields = [f for f in all_fields if f.is_relation is False]
 
                 print('normal_fields: ', normal_fields)
 
-                for index in range(len(r)):
-                    print('r[index]: ', r[index])
+                for index in range(len(api_data)):
+                    print('api_data[index]: ', api_data[index])
                     dict_to_insert = {}
 
                     for f in one_to_one_fields:
@@ -147,11 +145,11 @@ def agg():
                         obj_content_type = ContentType.objects.get_for_model(f.related_model)
                         f_related_model = obj_content_type.app_label + '_' + obj_content_type.model
 
-                        if f_related_model == 'core_topology' and r[index]['geometry'] is not None:
+                        if f_related_model == 'core_topology' and api_data[index]['geometry'] is not None:
                             print(model_name, ': topology exists')
                             fk_to_insert['kind'] = api_model.upper()
 
-                            geom = GEOSGeometry(str(r[index]['geometry']))  # default SRID of GEOSGeometry is 4326
+                            geom = GEOSGeometry(str(api_data[index]['geometry']))  # default SRID of GEOSGeometry is 4326
                             geom.transform(settings.SRID)
                             geom = WKBWriter().write(geom)  # drop Z dimension
                             geom = GEOSGeometry(geom)
@@ -160,34 +158,25 @@ def agg():
                             for ctf in coretopology_fields:
                                 ctf_name = ctf.name
                                 if ctf_name in core_topology['db_column_api_field']:
-                                    fk_to_insert[ctf_name] = r[index][core_topology['db_column_api_field'][ctf_name]]
+                                    fk_to_insert[ctf_name] = api_data[index][core_topology['db_column_api_field'][ctf_name]]
                                 elif ctf_name in core_topology['default_values']:
                                     fk_to_insert[ctf_name] = core_topology['default_values'][ctf_name]
 
                             print('fk_to_insert: ', fk_to_insert)
-                            # obj_to_insert.topo_object = Topology(**fk_to_insert)
-                            # obj_to_insert = current_model.objects.create(**fk_to_insert)
-                            # dict_to_insert['topo_object'] = new_topo
-                            # print(dict_to_insert['topo_object'])
                             dict_to_insert = fk_to_insert
 
                     for f in normal_fields:
                         f_name = f.name
                         print('f_name: ', f_name)
-                        if f_name in r[index]:
+                        if f_name in api_data[index]:
                             if f_name in model_specifics["db_column_api_field"]:
-                                dict_to_insert = get_api_field(r, index, f_name, model_specifics["db_column_api_field"], dict_to_insert)
+                                dict_to_insert = get_api_field(api_data, index, f_name, model_specifics["db_column_api_field"], dict_to_insert)
                             elif f_name in common['db_column_api_field']:
-                                dict_to_insert = get_api_field(r, index, f_name, common['db_column_api_field'], dict_to_insert)
+                                dict_to_insert = get_api_field(api_data, index, f_name, common['db_column_api_field'], dict_to_insert)
                             elif f_name in common['languages']:
-                                dict_to_insert = deserialize_translated_fields(r[index], f_name, dict_to_insert, normal_fields)
+                                dict_to_insert = deserialize_translated_fields(api_data[index], f_name, dict_to_insert)
                             elif f_name in common['default_values']:
                                 dict_to_insert[f_name] = common['default_values'][f_name]
-
-                    # print('dict_to_insert: ', vars(dict_to_insert['topo_object']))
-                    # obj_to_insert = current_model(**dict_to_insert)
-                    # obj_to_insert, created = current_model.objects.update_or_create(uuid=dict_to_insert['uuid'], defaults={**dict_to_insert})
-                    # print('obj_to_insert: ', obj_to_insert)
 
                     for f in fkeys_fields:
                         print('f: ', f)
@@ -209,13 +198,13 @@ def agg():
 
                         if f_related_model == 'Structure':
                             dict_to_insert['structure'] = current_structure
-                            #obj_to_insert.structure = current_structure
+                            # obj_to_insert.structure = current_structure
 
                         elif f_related_model in fk_not_integrated:
                             print('FK_NOT_INTEGRATED')
                             api_label = fk_not_integrated[f_related_model]['api_label']
                             print('api_label: ', api_label)
-                            old_fk_id = r[index][fk_field]
+                            old_fk_id = api_data[index][fk_field]
                             print('old_fk_id: ', old_fk_id)
                             old_value = [cat[api_label] for cat in fk_not_integrated[f_related_model]['data'] if cat['id'] == old_fk_id]
 
@@ -235,9 +224,9 @@ def agg():
                             api_field = specific[model_name]["db_column_api_field"][fk_field]
 
                             if type(api_field) is list:
-                                old_value = r[index][api_field[0]][api_field[1]]
+                                old_value = api_data[index][api_field[0]][api_field[1]]
                             else:
-                                old_value = r[index][api_field]
+                                old_value = api_data[index][api_field]
 
                             new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][model_name][f_related_model][old_value]
 
@@ -253,14 +242,14 @@ def agg():
                     print('obj_to_insert: ', vars(obj_to_insert))
                     obj_to_insert.save()
 
-                    if 'attachments' in r[index] and len(r[index]['attachments']) > 0:
-                        for a in r[index]['attachments']:
+                    if 'attachments' in api_data[index] and len(api_data[index]['attachments']) > 0:
+                        for attachment in api_data[index]['attachments']:
                             attachment_dict = {}
 
                             for db_name, api_field in common['attachments'].items():
-                                attachment_dict[db_name] = a[api_field]
+                                attachment_dict[db_name] = attachment[api_field]
                             for db_name, default_value in common['default_values'].items():
-                                if db_name in a:
+                                if db_name in attachment:
                                     attachment_dict[db_name] = default_value
 
                             print('obj_to_insert.pk: ', obj_to_insert.pk)
@@ -269,9 +258,9 @@ def agg():
                             attachment_dict['content_type_id'] = ContentType.objects.get(app_label=app_name, model=api_model).id
                             attachment_dict['creator_id'] = User.objects.get(username=AUTH_USER).id
 
-                            mt = guess_type(a['url'], strict=True)[0]
+                            mt = guess_type(attachment['url'], strict=True)[0]
                             if mt is not None and mt.split('/')[0].startswith('image'):
-                                attachment_name = a['url'].rpartition('/')[2]
+                                attachment_name = attachment['url'].rpartition('/')[2]
                                 folder_name = 'paperclip/' + app_name + '_' + api_model
                                 pk = str(obj_to_insert.pk)
 
@@ -283,20 +272,20 @@ def agg():
                                 # create folder if it doesn't exist
                                 os.makedirs(os.path.dirname(full_filepath), exist_ok=True)
 
-                                attachment_response = requests.get(a['url'])
+                                attachment_response = requests.get(attachment['url'])
                                 if not os.path.isfile(full_filepath):
                                     if attachment_response.status_code == 200:
-                                        print(f"Downloading {a['url']} to {full_filepath}")
-                                        urllib.request.urlretrieve(a['url'], full_filepath)
+                                        print(f"Downloading {attachment['url']} to {full_filepath}")
+                                        urllib.request.urlretrieve(attachment['url'], full_filepath)
                                     else:
-                                        print("Error {} for {}".format(attachment_response.status_code, a['url']))
+                                        print("Error {} for {}".format(attachment_response.status_code, attachment['url']))
 
-                            elif a['type'] == 'video':
+                            elif attachment['type'] == 'video':
                                 attachment_dict['filetype_id'] = FileType.objects.get(type='Vidéo').id
                                 attachment_dict['is_image'] = False
-                                attachment_dict['attachment_video'] = a['url']
+                                attachment_dict['attachment_video'] = attachment['url']
                             else:
-                                print(a)
+                                print(attachment)
                                 print('mimetype: ', mt)
                                 attachment_dict['filetype_id'] = FileType.objects.get(type='Autre').id
                                 attachment_dict['is_image'] = False
@@ -304,10 +293,10 @@ def agg():
                             attachment_to_add, created = Attachment.objects.update_or_create(uuid=attachment_dict['uuid'], defaults={**attachment_dict})
                             obj_to_insert.attachments.add(attachment_to_add, bulk=False)
 
-
                     print("\n{} OBJECT N°{} INSERTED!\n".format(api_model.upper(), index+1))
 
     toc = perf_counter()
     print(f"Performed aggregation in {toc - tic:0.4f} seconds")
+
 
 agg()
