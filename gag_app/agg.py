@@ -43,22 +43,22 @@ def agg():
             url = api_base_url + api_model
             params = {}
             if PORTALS:
-                portals_response = requests.get(api_base_url + 'portal', params={'fields': 'id,name'}).json()['results']
-                print('portals_response: ', portals_response)
-                portal_ids = [p['id'] for p in portals_response if p['name'] in PORTALS]
+                portals_results = requests.get(api_base_url + 'portal', params={'fields': 'id,name'}).json()['results']
+                print('portals_results: ', portals_results)
+                portal_ids = [p['id'] for p in portals_results if p['name'] in PORTALS]
                 portal_params = ','.join(str(id) for id in portal_ids)
                 params = {'portals': portal_params}
 
             params['fields'] = 'uuid'
             print(f'Fetching API for {api_model} uuids...')
-            response = requests.get(url, params=params)
-            uuids_response = response.json()["results"]
+            uuids_response = requests.get(url, params=params)
+            uuids_results = uuids_response.json()["results"]
 
-            while response.json()["next"] is not None:
-                response = requests.get(response.json()["next"], params=params)
-                uuids_response.extend(response.json()["results"])
+            while uuids_response.json()["next"] is not None:
+                uuids_response = requests.get(uuids_response.json()["next"], params=params)
+                uuids_results.extend(uuids_response.json()["results"])
 
-            uuids_list = [u['uuid'] for u in uuids_response]
+            uuids_list = [u['uuid'] for u in uuids_results]
 
             params.pop('fields')
 
@@ -108,23 +108,23 @@ def agg():
                     params_fk = {"language": GAG_BASE_LANGUAGE}
 
                     print("Fetching API for related model route...")
-                    response_fk = requests.get(url, params=params_fk).json()
-                    r_fk = response_fk['results']
-                    print('r_fk:', r_fk)
+                    fk_response = requests.get(url, params=params_fk).json()
+                    fk_results = fk_response['results']
+                    print('fk_results:', fk_results)
 
-                    if r_fk:
-                        api_labels = [rk for rk in r_fk[0].keys() if rk in list_label_field]
+                    if fk_results:
+                        api_labels = [rk for rk in fk_results[0].keys() if rk in list_label_field]
 
                         if len(api_labels) == 1:
                             api_label = ''.join(api_labels)
                         else:
-                            print('API response keys:', r_fk.keys())
+                            print('API response keys:', fk_results.keys())
                             print('api_labels:', api_labels)
                             raise Exception("len(api_labels) !=1 whereas exactly one column amongst {} should exist in {} API route".format(list_label_field, api_main_route))
 
                         print('api_label: ', api_label)
                         fk_not_integrated[fk_model_name] = {}
-                        fk_not_integrated[fk_model_name]['data'] = r_fk
+                        fk_not_integrated[fk_model_name]['data'] = fk_results
                         fk_not_integrated[fk_model_name]['api_label'] = api_label
 
                 print('fk_not_integrated: ', fk_not_integrated)
