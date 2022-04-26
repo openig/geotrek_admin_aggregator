@@ -1,5 +1,5 @@
 # URL du Geotrek-admin source :
-GADMIN_BASE_URL = 'geotrekdemo.ecrins-parcnational.fr'
+GADMIN_BASE_URL = 'admin48.openig.org'
 
 # Si nécessaire, nom du (ou des) portail(s) de la base source
 # dont on veut récupérer les données :
@@ -8,7 +8,7 @@ PORTALS = None
 # Nom de la source des données.
 # Doit correspondre à une entrée dans la table "authent_structure".
 # Indispensable pour la tracabilité des données.
-AUTHENT_STRUCTURE = 'PNE'
+AUTHENT_STRUCTURE = 'Conseil départemental de la Lozère'
 
 # Nom de l'user auquel sera attribuée la création des médias
 # Par exemple un compte d'administration.
