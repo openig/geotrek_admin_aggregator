@@ -2,8 +2,6 @@ import requests
 import os
 import urllib.request
 from mimetypes import guess_type
-from geotrek.trekking.models import Trek, POI, POIType, Route, Practice, DifficultyLevel
-from geotrek.core.models import Topology
 from geotrek.common.models import FileType, Attachment
 from geotrek.authent.models import User
 from django.conf import settings
