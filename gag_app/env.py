@@ -62,7 +62,7 @@ core_topology = {
     }
 }
 
-specific = {
+model_to_import = {
     "POI": {
         "db_column_api_field": {},
         "fk_not_integrated": {

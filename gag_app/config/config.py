@@ -18,13 +18,13 @@ GAG_BASE_LANGUAGE = 'fr'  # langue par défaut de la base de données aggregator
 
 # Exemples :
 # geotrek-admin.cevennes-parcnational.net
-# AUTHENT_STRUCTURE='PNC' PORTALS=['DEP_48']
+# AUTHENT_STRUCTURE = 'PNC' PORTALS = ['DEP_48']
 
 # admin48.openig.org
-# AUTHENT_STRUCTURE='Conseil départemental de la Lozère' PORTALS = None
+# AUTHENT_STRUCTURE = 'Conseil départemental de la Lozère' PORTALS = None
 
 # geotrekdemo.ecrins-parcnational.fr
-# AUTHENT_STRUCTURE='PNE' PORTALS = None
+# AUTHENT_STRUCTURE = 'PNE' PORTALS = None
 
 # openig-geotrek-pnrgca.ataraxie.fr
-# AUTHENT_STRUCTURE='PNRGCA' PORTALS = [1]
+# AUTHENT_STRUCTURE = 'PNRGCA' PORTALS = 'Rando Lozère'
