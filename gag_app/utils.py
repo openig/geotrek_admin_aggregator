@@ -1,11 +1,13 @@
-def geom4326_to_wkt(data):
-    from gag_app.config.config import SRID
-    from django.contrib.gis.geos import GEOSGeometry
+def geom_to_wkt(data):
+    from django.conf import settings
+    from django.contrib.gis.geos import GEOSGeometry, WKBWriter
 
-    geom = GEOSGeometry(str(data))  # default SRID of GEOSGeometry is 4326
-    geom.transform(SRID)
+    geom = GEOSGeometry(str(data['geometry']))  # default SRID of GEOSGeometry is 4326
+    geom.transform(settings.SRID)
+    geom = WKBWriter().write(geom)  # drop Z dimension
+    geom = GEOSGeometry(geom)
 
-    return geom.wkt
+    return geom
 
 
 def get_api_field(r, index, f_name, value, dict_to_insert):

@@ -8,10 +8,9 @@ from django.conf import settings
 from warnings import warn
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.gis.geos import GEOSGeometry, WKBWriter
 from gag_app.env import model_to_import, source_cat_to_gag_cat, core_topology, common, list_label_field
 from gag_app.config.config import AUTHENT_STRUCTURE, AUTH_USER, GAG_BASE_LANGUAGE, PORTALS
-from gag_app.utils import get_api_field, deserialize_translated_fields
+from gag_app.utils import geom_to_wkt, get_api_field, deserialize_translated_fields
 
 
 class ParserAPIv2ImportContentTypeModel():
@@ -183,11 +182,7 @@ class UpdateAndInsert():
                 print(self.model_to_import_name, ': topology exists')
                 fk_to_insert['kind'] = self.model_to_import_name.upper()
 
-                geom = GEOSGeometry(str(self.api_data[self.index]['geometry']))  # default SRID of GEOSGeometry is 4326
-                geom.transform(settings.SRID)
-                geom = WKBWriter().write(geom)  # drop Z dimension
-                geom = GEOSGeometry(geom)
-                fk_to_insert['geom'] = geom
+                fk_to_insert['geom'] = geom_to_wkt(self.api_data[self.index])
 
                 for ctf in self.coretopology_fields:
                     ctf_name = ctf.name
