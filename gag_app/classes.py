@@ -16,13 +16,14 @@ from gag_app.config.config import AUTHENT_STRUCTURE, AUTH_USER, GAG_BASE_LANGUAG
 from gag_app.utils import get_api_field, deserialize_translated_fields
 
 
-class ParserImportAPIv2ContentTypeModel():
-    def __init__(self, api_base_url, model_to_import_name, coretopology_fields, structure):
+class ParserAPIv2ImportContentTypeModel():
+    def __init__(self, api_base_url, model_to_import_name, model_to_import_properties, structure, coretopology_fields):
         self.api_base_url = api_base_url
         self.model_to_import_name = model_to_import_name
+        self.model_to_import_properties = model_to_import_properties
         # self.process_data = process_data  # inutile pr l'instant
-        self.coretopology_fields = coretopology_fields
         self.structure = structure
+        self.coretopology_fields = coretopology_fields
         self.url_params = {}
         self.model_lowercase = self.model_to_import_name.lower()
 
@@ -93,7 +94,32 @@ class ParserImportAPIv2ContentTypeModel():
 
         return last_aggregation_datetime.strftime('%Y-%m-%d')
 
-    def delete_update_insert_data(self, model_to_import_properties):
+    def get_fk_not_integrated(self):
+        fk_not_integrated = {}
+
+        for fk_model_name, api_fk_route in self.model_to_import_properties["fk_not_integrated"].items():
+            fk_results = self.query_api(additional_params={"language": GAG_BASE_LANGUAGE}, api_route=api_fk_route)
+            print('fk_results:', fk_results)
+
+            if fk_results:
+                api_labels = [rk for rk in fk_results[0].keys() if rk in list_label_field]
+
+                if len(api_labels) == 1:
+                    api_label = ''.join(api_labels)
+                else:
+                    print('API response keys:', fk_results.keys())
+                    print('api_labels:', api_labels)
+                    raise Exception("len(api_labels) !=1 whereas exactly one column amongst {} should exist in {} API route".format(list_label_field, api_fk_route))
+
+                print('api_label: ', api_label)
+                fk_not_integrated[fk_model_name] = {}
+                fk_not_integrated[fk_model_name]['data'] = fk_results
+                fk_not_integrated[fk_model_name]['api_label'] = api_label
+
+        print('fk_not_integrated: ', fk_not_integrated)
+        return fk_not_integrated
+
+    def delete_update_insert_data(self):
         if PORTALS:
             self.url_params['portals'] = self.get_portals_ids()
 
@@ -111,197 +137,215 @@ class ParserImportAPIv2ContentTypeModel():
         api_data = self.query_api()
 
         if api_data:
-            all_fields = self.current_model._meta.get_fields(include_parents=False)  # toutes les colonnes du modèle
-            print('all_fields: ', all_fields)
+            self.fk_not_integrated = self.get_fk_not_integrated()
 
-            fkeys_fields = [f for f in all_fields if f.many_to_one]
-            one_to_one_fields = [f for f in all_fields if f.one_to_one]
+            UpdateAndInsert(
+                api_data=api_data,
+                current_model=self.current_model,
+                model_to_import_name=self.model_to_import_name,
+                model_to_import_properties=self.model_to_import_properties,
+                coretopology_fields=self.coretopology_fields,
+                structure=self.structure,
+                app_label=self.app_label,
+                model_lowercase=self.model_lowercase,
+                fk_not_integrated=self.fk_not_integrated
+            ).run()
 
-            fk_not_integrated = {}
-            for fk_model_name, api_fk_route in model_to_import_properties["fk_not_integrated"].items():
-                fk_results = self.query_api(additional_params={"language": GAG_BASE_LANGUAGE}, api_route=api_fk_route)
-                print('fk_results:', fk_results)
 
-                if fk_results:
-                    api_labels = [rk for rk in fk_results[0].keys() if rk in list_label_field]
+class UpdateAndInsert():
+    def __init__(self, api_data, current_model, model_to_import_name, model_to_import_properties, coretopology_fields, structure, app_label, model_lowercase, fk_not_integrated):
+        self.api_data = api_data
+        self.current_model = current_model
+        self.model_to_import_name = model_to_import_name
+        self.model_to_import_properties = model_to_import_properties
+        self.coretopology_fields = coretopology_fields
+        self.structure = structure
+        self.app_label = app_label
+        self.model_lowercase = model_lowercase
+        self.fk_not_integrated = fk_not_integrated
 
-                    if len(api_labels) == 1:
-                        api_label = ''.join(api_labels)
-                    else:
-                        print('API response keys:', fk_results.keys())
-                        print('api_labels:', api_labels)
-                        raise Exception("len(api_labels) !=1 whereas exactly one column amongst {} should exist in {} API route".format(list_label_field, api_fk_route))
+        all_fields = self.current_model._meta.get_fields(include_parents=False)  # toutes les colonnes du modèle
+        print('all_fields: ', all_fields)
 
-                    print('api_label: ', api_label)
-                    fk_not_integrated[fk_model_name] = {}
-                    fk_not_integrated[fk_model_name]['data'] = fk_results
-                    fk_not_integrated[fk_model_name]['api_label'] = api_label
+        self.fkeys_fields = [f for f in all_fields if f.many_to_one]
+        self.one_to_one_fields = [f for f in all_fields if f.one_to_one]
+        self.normal_fields = [f for f in all_fields if f.is_relation is False]
 
-            print('fk_not_integrated: ', fk_not_integrated)
+        # print('fkey_fields: ', fkeys_fields)
+        print('normal_fields: ', self.normal_fields)
 
-            # print(fkeys_fields)
+    def one_to_one_fields_build_dict(self):
+        for f in self.one_to_one_fields:
+            print(f)
+            fk_to_insert = {}
+            obj_content_type = ContentType.objects.get_for_model(f.related_model)
+            f_related_model = f'{obj_content_type.app_label}_{obj_content_type.model}'
 
-            normal_fields = [f for f in all_fields if f.is_relation is False]
+            if f_related_model == 'core_topology' and self.api_data[self.index]['geometry'] is not None:
+                print(self.model_to_import_name, ': topology exists')
+                fk_to_insert['kind'] = self.model_to_import_name.upper()
 
-            print('normal_fields: ', normal_fields)
+                geom = GEOSGeometry(str(self.api_data[self.index]['geometry']))  # default SRID of GEOSGeometry is 4326
+                geom.transform(settings.SRID)
+                geom = WKBWriter().write(geom)  # drop Z dimension
+                geom = GEOSGeometry(geom)
+                fk_to_insert['geom'] = geom
 
-            for index in range(len(api_data)):
-                print('api_data[index]: ', api_data[index])
-                dict_to_insert = {}
+                for ctf in self.coretopology_fields:
+                    ctf_name = ctf.name
+                    if ctf_name in core_topology['db_column_api_field']:
+                        fk_to_insert[ctf_name] = self.api_data[self.index][core_topology['db_column_api_field'][ctf_name]]
+                    elif ctf_name in core_topology['default_values']:
+                        fk_to_insert[ctf_name] = core_topology['default_values'][ctf_name]
 
-                for f in one_to_one_fields:
-                    print(f)
-                    fk_to_insert = {}
-                    obj_content_type = ContentType.objects.get_for_model(f.related_model)
-                    f_related_model = f'{obj_content_type.app_label}_{obj_content_type.model}'
+                print('fk_to_insert: ', fk_to_insert)
 
-                    if f_related_model == 'core_topology' and api_data[index]['geometry'] is not None:
-                        print(self.model_to_import_name, ': topology exists')
-                        fk_to_insert['kind'] = self.model_to_import_name.upper()
+        return fk_to_insert
 
-                        geom = GEOSGeometry(str(api_data[index]['geometry']))  # default SRID of GEOSGeometry is 4326
-                        geom.transform(settings.SRID)
-                        geom = WKBWriter().write(geom)  # drop Z dimension
-                        geom = GEOSGeometry(geom)
-                        fk_to_insert['geom'] = geom
+    def normal_fields_build_dict(self):
+        for f in self.normal_fields:
+            f_name = f.name
+            print('f_name: ', f_name)
+            if f_name in self.api_data[self.index]:
+                if f_name in self.model_to_import_properties['db_column_api_field']:
+                    self.dict_to_insert = get_api_field(self.api_data, self.index, f_name, self.model_to_import_properties['db_column_api_field'], self.dict_to_insert)
+                elif f_name in common['db_column_api_field']:
+                    self.dict_to_insert = get_api_field(self.api_data, self.index, f_name, common['db_column_api_field'], self.dict_to_insert)
+                elif f_name in common['languages']:
+                    self.dict_to_insert = deserialize_translated_fields(self.api_data[self.index], f_name, self.dict_to_insert)
+                elif f_name in common['default_values']:
+                    self.dict_to_insert[f_name] = common['default_values'][f_name]
 
-                        for ctf in self.coretopology_fields:
-                            ctf_name = ctf.name
-                            if ctf_name in core_topology['db_column_api_field']:
-                                fk_to_insert[ctf_name] = api_data[index][core_topology['db_column_api_field'][ctf_name]]
-                            elif ctf_name in core_topology['default_values']:
-                                fk_to_insert[ctf_name] = core_topology['default_values'][ctf_name]
+        return self.dict_to_insert
 
-                        print('fk_to_insert: ', fk_to_insert)
-                        dict_to_insert = fk_to_insert
+    def fkeys_fields_build_dict(self):
+        for f in self.fkeys_fields:
+            print('f: ', f)
+            fk_to_insert = {}
+            f_related_model = f.related_model.__name__
+            print('f_related_model: ', f_related_model)
+            related_model_fields = f.related_model._meta.get_fields()
+            related_model_normal_fields_name = [f.name for f in related_model_fields if f.is_relation is False and f.name in list_label_field]
+            print('related_model_normal_fields_name: ', related_model_normal_fields_name)
+            fk_field = f.name
+            print("fk_field: ", fk_field)
 
-                for f in normal_fields:
-                    f_name = f.name
-                    print('f_name: ', f_name)
-                    if f_name in api_data[index]:
-                        if f_name in model_to_import_properties["db_column_api_field"]:
-                            dict_to_insert = get_api_field(api_data, index, f_name, model_to_import_properties["db_column_api_field"], dict_to_insert)
-                        elif f_name in common['db_column_api_field']:
-                            dict_to_insert = get_api_field(api_data, index, f_name, common['db_column_api_field'], dict_to_insert)
-                        elif f_name in common['languages']:
-                            dict_to_insert = deserialize_translated_fields(api_data[index], f_name, dict_to_insert)
-                        elif f_name in common['default_values']:
-                            dict_to_insert[f_name] = common['default_values'][f_name]
+            if len(related_model_normal_fields_name) == 1:
+                name_field = related_model_normal_fields_name[0]
+            elif f_related_model != 'Topology':
+                print('related_model_fields:', related_model_fields)
+                print('related_model_normal_fields_name:', related_model_normal_fields_name)
+                raise Exception("len(related_model_normal_fields_name) !=1 whereas exactly one field amongst {} should exist in {} model".format(list_label_field, f_related_model))
 
-                for f in fkeys_fields:
-                    print('f: ', f)
-                    fk_to_insert = {}
-                    f_related_model = f.related_model.__name__
-                    print('f_related_model: ', f_related_model)
-                    related_model_fields = f.related_model._meta.get_fields()
-                    related_model_normal_fields_name = [f.name for f in related_model_fields if f.is_relation is False and f.name in list_label_field]
-                    print('related_model_normal_fields_name: ', related_model_normal_fields_name)
-                    fk_field = f.name
-                    print("fk_field: ", fk_field)
+            if f_related_model == 'Structure':
+                self.dict_to_insert['structure'] = self.structure
+                # self.obj_to_insert.structure = self.structure
 
-                    if len(related_model_normal_fields_name) == 1:
-                        name_field = related_model_normal_fields_name[0]
-                    elif f_related_model != 'Topology':
-                        print('related_model_fields:', related_model_fields)
-                        print('related_model_normal_fields_name:', related_model_normal_fields_name)
-                        raise Exception("len(related_model_normal_fields_name) !=1 whereas exactly one field amongst {} should exist in {} model".format(list_label_field, f_related_model))
+            elif f_related_model in self.fk_not_integrated:
+                print('FK_NOT_INTEGRATED')
+                api_label = self.fk_not_integrated[f_related_model]['api_label']
+                print('api_label: ', api_label)
+                old_fk_id = self.api_data[self.index][fk_field]
+                print('old_fk_id: ', old_fk_id)
+                old_value = [cat[api_label] for cat in self.fk_not_integrated[f_related_model]['data'] if cat['id'] == old_fk_id]
 
-                    if f_related_model == 'Structure':
-                        dict_to_insert['structure'] = self.structure
-                        # obj_to_insert.structure = self.structure
+                if not old_value:
+                    print('old_value: ', old_value)
+                    warn('No old_value found')
+                elif len(old_value) > 1:
+                    print('old_value: ', old_value)
+                    raise Exception('Multiple categories found for given id!')
+                else:
+                    new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][self.model_to_import_name][f_related_model][old_value[0]]
+                    fk_to_insert[name_field] = new_value
+                    self.dict_to_insert[fk_field] = f.related_model.objects.get(**fk_to_insert)
+                    # setattr(self.obj_to_insert, fk_field, f.related_model.objects.get(**fk_to_insert))
 
-                    elif f_related_model in fk_not_integrated:
-                        print('FK_NOT_INTEGRATED')
-                        api_label = fk_not_integrated[f_related_model]['api_label']
-                        print('api_label: ', api_label)
-                        old_fk_id = api_data[index][fk_field]
-                        print('old_fk_id: ', old_fk_id)
-                        old_value = [cat[api_label] for cat in fk_not_integrated[f_related_model]['data'] if cat['id'] == old_fk_id]
+            elif fk_field in model_to_import[self.model_to_import_name]["db_column_api_field"]:
+                api_field = model_to_import[self.model_to_import_name]["db_column_api_field"][fk_field]
 
-                        if not old_value:
-                            print('old_value: ', old_value)
-                            warn('No old_value found')
-                        elif len(old_value) > 1:
-                            print('old_value: ', old_value)
-                            raise Exception('Multiple categories found for given id!')
+                if type(api_field) is list:
+                    old_value = self.api_data[self.index][api_field[0]][api_field[1]]
+                else:
+                    old_value = self.api_data[self.index][api_field]
+
+                new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][self.model_to_import_name][f_related_model][old_value]
+
+                fk_to_insert[name_field] = new_value
+                print('fk_to_insert: ', fk_to_insert)
+                self.dict_to_insert[fk_field] = f.related_model.objects.get(**fk_to_insert)
+                # setattr(self.obj_to_insert, fk_field, f.related_model.objects.get(**fk_to_insert))
+            else:
+                warn("Related model doesn't conform to any handled possibility.")
+
+        return self.dict_to_insert
+
+    def import_attachments(self):
+        if 'attachments' in self.api_data[self.index] and len(self.api_data[self.index]['attachments']) > 0:
+            for attachment in self.api_data[self.index]['attachments']:
+                attachment_dict = {}
+
+                for db_name, api_field in common['attachments'].items():
+                    attachment_dict[db_name] = attachment[api_field]
+                for db_name, default_value in common['default_values'].items():
+                    if db_name in attachment:
+                        attachment_dict[db_name] = default_value
+
+                print('self.obj_to_insert.pk: ', self.obj_to_insert.pk)
+                print('self.obj_to_insert: ', vars(self.obj_to_insert))
+                attachment_dict['object_id'] = self.obj_to_insert.pk
+                attachment_dict['content_type_id'] = ContentType.objects.get(app_label=self.app_label, model=self.model_lowercase).id
+                attachment_dict['creator_id'] = User.objects.get(username=AUTH_USER).id
+
+                mt = guess_type(attachment['url'], strict=True)[0]
+                if mt is not None and mt.split('/')[0].startswith('image'):
+                    attachment_name = attachment['url'].rpartition('/')[2]
+                    folder_name = f'paperclip/{self.app_label}_{self.model_lowercase}'
+                    pk = str(self.obj_to_insert.pk)
+
+                    attachment_dict['filetype_id'] = FileType.objects.get(type='Photographie').id
+                    attachment_dict['is_image'] = True
+                    attachment_dict['attachment_file'] = os.path.join(folder_name, pk, attachment_name)
+
+                    full_filepath = os.path.join(settings.MEDIA_ROOT, attachment_dict['attachment_file'])
+                    # create folder if it doesn't exist
+                    os.makedirs(os.path.dirname(full_filepath), exist_ok=True)
+
+                    attachment_response = requests.get(attachment['url'])
+                    if not os.path.isfile(full_filepath):
+                        if attachment_response.status_code == 200:
+                            print(f"Downloading {attachment['url']} to {full_filepath}")
+                            urllib.request.urlretrieve(attachment['url'], full_filepath)
                         else:
-                            new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][self.model_to_import_name][f_related_model][old_value[0]]
-                            fk_to_insert[name_field] = new_value
-                            dict_to_insert[fk_field] = f.related_model.objects.get(**fk_to_insert)
-                            # setattr(obj_to_insert, fk_field, f.related_model.objects.get(**fk_to_insert))
+                            print("Error {} for {}".format(attachment_response.status_code, attachment['url']))
 
-                    elif fk_field in model_to_import[self.model_to_import_name]["db_column_api_field"]:
-                        api_field = model_to_import[self.model_to_import_name]["db_column_api_field"][fk_field]
+                elif attachment['type'] == 'video':
+                    attachment_dict['filetype_id'] = FileType.objects.get(type='Vidéo').id
+                    attachment_dict['is_image'] = False
+                    attachment_dict['attachment_video'] = attachment['url']
+                else:
+                    print(attachment)
+                    print('mimetype: ', mt)
+                    attachment_dict['filetype_id'] = FileType.objects.get(type='Autre').id
+                    attachment_dict['is_image'] = False
 
-                        if type(api_field) is list:
-                            old_value = api_data[index][api_field[0]][api_field[1]]
-                        else:
-                            old_value = api_data[index][api_field]
+                attachment_to_add, created = Attachment.objects.update_or_create(uuid=attachment_dict['uuid'], defaults={**attachment_dict})
+                self.obj_to_insert.attachments.add(attachment_to_add, bulk=False)
 
-                        new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][self.model_to_import_name][f_related_model][old_value]
+    def run(self):
+        for self.index in range(len(self.api_data)):
+            print('self.api_data[self.index]: ', self.api_data[self.index])
+            self.dict_to_insert = {}
 
-                        fk_to_insert[name_field] = new_value
-                        print('fk_to_insert: ', fk_to_insert)
-                        dict_to_insert[fk_field] = f.related_model.objects.get(**fk_to_insert)
-                        # setattr(obj_to_insert, fk_field, f.related_model.objects.get(**fk_to_insert))
-                    else:
-                        warn("Related model doesn't conform to any handled possibility.")
+            self.dict_to_insert = self.one_to_one_fields_build_dict()
+            self.dict_to_insert = self.normal_fields_build_dict()
+            self.dict_to_insert = self.fkeys_fields_build_dict()
 
-                obj_to_insert, created = self.current_model.objects.update_or_create(uuid=dict_to_insert['uuid'], defaults={**dict_to_insert})
+            self.obj_to_insert, created = self.current_model.objects.update_or_create(uuid=self.dict_to_insert['uuid'], defaults={**self.dict_to_insert})
 
-                print('obj_to_insert: ', vars(obj_to_insert))
-                obj_to_insert.save()
+            print('self.obj_to_insert: ', vars(self.obj_to_insert))
+            self.obj_to_insert.save()
 
-                if 'attachments' in api_data[index] and len(api_data[index]['attachments']) > 0:
-                    for attachment in api_data[index]['attachments']:
-                        attachment_dict = {}
+            self.import_attachments()
 
-                        for db_name, api_field in common['attachments'].items():
-                            attachment_dict[db_name] = attachment[api_field]
-                        for db_name, default_value in common['default_values'].items():
-                            if db_name in attachment:
-                                attachment_dict[db_name] = default_value
-
-                        print('obj_to_insert.pk: ', obj_to_insert.pk)
-                        print('obj_to_insert: ', vars(obj_to_insert))
-                        attachment_dict['object_id'] = obj_to_insert.pk
-                        attachment_dict['content_type_id'] = ContentType.objects.get(app_label=self.app_label, model=self.model_lowercase).id
-                        attachment_dict['creator_id'] = User.objects.get(username=AUTH_USER).id
-
-                        mt = guess_type(attachment['url'], strict=True)[0]
-                        if mt is not None and mt.split('/')[0].startswith('image'):
-                            attachment_name = attachment['url'].rpartition('/')[2]
-                            # folder_name = 'paperclip/' + self.app_label + '_' + self.model_lowercase
-                            folder_name = f'paperclip/{self.app_label}_{self.model_lowercase}'
-                            pk = str(obj_to_insert.pk)
-
-                            attachment_dict['filetype_id'] = FileType.objects.get(type='Photographie').id
-                            attachment_dict['is_image'] = True
-                            attachment_dict['attachment_file'] = os.path.join(folder_name, pk, attachment_name)
-
-                            full_filepath = os.path.join(settings.MEDIA_ROOT, attachment_dict['attachment_file'])
-                            # create folder if it doesn't exist
-                            os.makedirs(os.path.dirname(full_filepath), exist_ok=True)
-
-                            attachment_response = requests.get(attachment['url'])
-                            if not os.path.isfile(full_filepath):
-                                if attachment_response.status_code == 200:
-                                    print(f"Downloading {attachment['url']} to {full_filepath}")
-                                    urllib.request.urlretrieve(attachment['url'], full_filepath)
-                                else:
-                                    print("Error {} for {}".format(attachment_response.status_code, attachment['url']))
-
-                        elif attachment['type'] == 'video':
-                            attachment_dict['filetype_id'] = FileType.objects.get(type='Vidéo').id
-                            attachment_dict['is_image'] = False
-                            attachment_dict['attachment_video'] = attachment['url']
-                        else:
-                            print(attachment)
-                            print('mimetype: ', mt)
-                            attachment_dict['filetype_id'] = FileType.objects.get(type='Autre').id
-                            attachment_dict['is_image'] = False
-
-                        attachment_to_add, created = Attachment.objects.update_or_create(uuid=attachment_dict['uuid'], defaults={**attachment_dict})
-                        obj_to_insert.attachments.add(attachment_to_add, bulk=False)
-
-                print("\n{} OBJECT N°{} INSERTED!\n".format(self.model_lowercase.upper(), index+1))
+            print("\n{} OBJECT N°{} INSERTED!\n".format(self.model_lowercase.upper(), self.index+1))
