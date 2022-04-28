@@ -100,6 +100,13 @@ model_to_import = {
             "Practice": "trek_practice",
             "Route": "trek_route",
             "ReservationSystem": "reservationsystem",
+            "Theme": "theme",
+            # "Rating": "trek_rating",
+            # "TrekNetwork": "trek_network",
+            # "Accessibility": "trek_accessibility",
+            # "InformationDesk": "informationdesk",
+            # "RecordSource": "source",
+            # "Label": "label",
         },
     }
 }
@@ -145,6 +152,18 @@ source_cat_to_gag_cat = {
                 "OpenSystem": "OpenSystem",
                 "Itinérance": "Gîtes de France"
             },
+            "Theme": {
+                "Flore": "Faune et flore",
+                "Faune": "Faune et flore",
+                "Géologie": "Eau et géologie",
+                "Architecture": "Architecture et village",
+                "Point de vue": "Forêt",
+                "Refuge": "Architecture et village",
+                "Archéologie et histoire": "Histoire et culture",
+                "Sommet": "Forêt",
+                "Pastoralisme": "Agriculture et élevage",
+                "Lac et glacier": "Forêt",
+            }
         },
     },
     "PNC": {

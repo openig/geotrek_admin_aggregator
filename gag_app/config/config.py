@@ -8,6 +8,7 @@ PORTALS = None
 # Nom de la source des données.
 # Doit correspondre à une entrée dans la table "authent_structure".
 # Indispensable pour la tracabilité des données.
+# CLARIFIER QUE CE N'EST PAS l'AUTHENT_STRUCTURE DE LA BDD SOURCE MAIS UNIQUEMENT CELLE DES DONNEES DANS L'AGGREGATOR
 AUTHENT_STRUCTURE = 'PNE'
 
 # Nom de l'user auquel sera attribuée la création des médias
