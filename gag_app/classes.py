@@ -165,24 +165,23 @@ class UpdateAndInsert():
         self.fk_not_integrated = fk_not_integrated
 
         all_fields = self.current_model._meta.get_fields(include_parents=False)  # toutes les colonnes du modèle
-        print('all_fields: ', all_fields)
+        # print('all_fields: ', all_fields)
 
         self.many_to_one_fields = [f for f in all_fields if f.many_to_one]
         self.many_to_many_fields = [f for f in all_fields if f.many_to_many]
         self.one_to_one_fields = [f for f in all_fields if f.one_to_one]
         self.normal_fields = [f for f in all_fields if f.is_relation is False]
 
-        # print('fkey_fields: ', fkeys_fields)
-        print('normal_fields: ', self.normal_fields)
+        # print('normal_fields: ', self.normal_fields)
 
     def one_to_one_fields_build_dict(self):
         for f in self.one_to_one_fields:
             print(f)
             fk_to_insert = {}
             obj_content_type = ContentType.objects.get_for_model(f.related_model)
-            f_related_model = f'{obj_content_type.app_label}_{obj_content_type.model}'
+            f_related_model_name = f'{obj_content_type.app_label}_{obj_content_type.model}'
 
-            if f_related_model == 'core_topology' and self.api_data[self.index]['geometry'] is not None:
+            if f_related_model_name == 'core_topology' and self.api_data[self.index]['geometry'] is not None:
                 print(self.model_to_import_name, ': topology exists')
                 fk_to_insert['kind'] = self.model_to_import_name.upper()
 
@@ -215,108 +214,99 @@ class UpdateAndInsert():
 
         return self.dict_to_insert
 
-    def get_label_field(self, field):
-        print('field: ', field)
-        field_related_model = field.related_model.__name__
-        print('f_related_model: ', field_related_model)
-        related_model_fields = field.related_model._meta.get_fields()
-        related_model_normal_fields_name = [f.name for f in related_model_fields if f.is_relation is False and f.name in list_label_field]
-        print('related_model_normal_fields_name: ', related_model_normal_fields_name)
-        fk_field = field.name
-        print("fk_field: ", fk_field)
-
-        return field_related_model, related_model_fields, related_model_normal_fields_name, fk_field
-
     def many_to_one_fields_build_dict(self):
-        for f in self.many_to_one_fields:
-            fk_to_insert = {}
-            f_related_model, related_model_fields, related_model_normal_fields_name, fk_field = self.get_label_field(f)
+        for field in self.many_to_one_fields:
+            self.fk_to_insert = {}
+            self.f_related_model_name, self.fk_model_label_name, self.fk_field_name = self.get_names_api_label_field_and_django_fk_field(field)
 
-            if len(related_model_normal_fields_name) == 1:
-                name_field = related_model_normal_fields_name[0]
-            elif f_related_model != 'Topology':
-                print('related_model_fields:', related_model_fields)
-                print('related_model_normal_fields_name:', related_model_normal_fields_name)
-                raise Exception("len(related_model_normal_fields_name) !=1 whereas exactly one field amongst {} should exist in {} model".format(list_label_field, f_related_model))
-
-            if f_related_model == 'Structure':
+            if self.f_related_model_name == 'Structure':
                 self.dict_to_insert['structure'] = self.structure
-
-            elif f_related_model in self.fk_not_integrated:
-                print('MTO_NOT_INTEGRATED')
-                api_label = self.fk_not_integrated[f_related_model]['api_label']
-                print('api_label: ', api_label)
-                old_fk_id = self.api_data[self.index][fk_field]
-                print('old_fk_id: ', old_fk_id)
-                old_value = [cat[api_label] for cat in self.fk_not_integrated[f_related_model]['data'] if cat['id'] == old_fk_id]
-
-                if not old_value:
-                    print('old_value: ', old_value)
-                    warn('No old_value found')
-                elif len(old_value) > 1:
-                    print('old_value: ', old_value)
-                    raise Exception('Multiple categories found for given id!')
-                else:
-                    new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][self.model_to_import_name][f_related_model][old_value[0]]
-                    fk_to_insert[name_field] = new_value
-                    self.dict_to_insert[fk_field] = f.related_model.objects.get(**fk_to_insert)
-
-            elif fk_field in model_to_import[self.model_to_import_name]["db_column_api_field"]:
-                api_field = model_to_import[self.model_to_import_name]["db_column_api_field"][fk_field]
+            elif self.fk_field_name in model_to_import[self.model_to_import_name]["db_column_api_field"]:
+                api_field = model_to_import[self.model_to_import_name]["db_column_api_field"][self.fk_field_name]
 
                 if type(api_field) is list:
                     old_value = self.api_data[self.index][api_field[0]][api_field[1]]
                 else:
                     old_value = self.api_data[self.index][api_field]
 
-                new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][self.model_to_import_name][f_related_model][old_value]
+                new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][self.model_to_import_name][self.f_related_model_name][old_value]
 
-                fk_to_insert[name_field] = new_value
-                print('fk_to_insert: ', fk_to_insert)
-                self.dict_to_insert[fk_field] = f.related_model.objects.get(**fk_to_insert)
+                self.fk_to_insert[self.fk_model_label_name] = new_value
+                print('self.fk_to_insert: ', self.fk_to_insert)
+                self.dict_to_insert[self.fk_field_name] = field.related_model.objects.get(**self.fk_to_insert)
+            elif self.f_related_model_name in self.fk_not_integrated:
+                self.query_fk_not_integrated_dict(type='many_to_one', field=field)
             else:
                 warn("Related model doesn't conform to any handled possibility.")
 
         return self.dict_to_insert
 
     def many_to_many_fields_build_dict(self):
-        for f in self.many_to_many_fields:
-            mtm_to_add = None
-            fk_to_insert = {}
-            f_related_model, related_model_fields, related_model_normal_fields_name, fk_field = self.get_label_field(f)
+        for field in self.many_to_many_fields:
+            self.fk_to_insert = {}
+            self.f_related_model_name, self.fk_model_label_name, self.fk_field_name = self.get_names_api_label_field_and_django_fk_field(field)
 
-            if len(related_model_normal_fields_name) == 1:
-                name_field = related_model_normal_fields_name[0]
-            elif f_related_model != 'Topology':
-                print('related_model_fields:', related_model_fields)
-                print('related_model_normal_fields_name:', related_model_normal_fields_name)
-                raise Exception("len(related_model_normal_fields_name) !=1 whereas exactly one field amongst {} should exist in {} model".format(list_label_field, f_related_model))
-
-            if f_related_model in self.fk_not_integrated:
-                print('MTM_NOT_INTEGRATED')
-                api_label = self.fk_not_integrated[f_related_model]['api_label']
-                print('api_label: ', api_label)
-                old_fk_id = self.api_data[self.index][fk_field]
-                print('old_fk_id: ', old_fk_id)
-                for id in old_fk_id:
-                    old_value = [cat[api_label] for cat in self.fk_not_integrated[f_related_model]['data'] if cat['id'] == id]
-
-                    if not old_value:
-                        print('old_value: ', old_value)
-                        warn('No old_value found')
-                    elif len(old_value) > 1:
-                        print('old_value: ', old_value)
-                        raise Exception('Multiple categories found for given id!')
-                    else:
-                        new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][self.model_to_import_name][f_related_model][old_value[0]]
-                        fk_to_insert[name_field] = new_value
-
-                    if name_field in fk_to_insert:
-                        mtm_to_add = f.related_model.objects.get(**fk_to_insert)
-                        print('mtm_to_add: ', mtm_to_add)
-                        getattr(self.obj_to_insert, f.name).add(mtm_to_add)
+            if self.f_related_model_name in self.fk_not_integrated:
+                self.query_fk_not_integrated_dict(type='many_to_many', field=field)
             else:
                 warn("Related model doesn't conform to any handled possibility.")
+
+    def get_names_api_label_field_and_django_fk_field(self, field):
+        print('field: ', field)
+        field_related_model_name = field.related_model.__name__
+        print('field_related_model_name: ', field_related_model_name)
+        related_model_fields = field.related_model._meta.get_fields()
+        related_model_normal_fields_name = [f.name for f in related_model_fields if f.is_relation is False and f.name in list_label_field]
+        print('related_model_normal_fields_name: ', related_model_normal_fields_name)
+        fk_field_name = field.name
+        print("fk_field_name: ", fk_field_name)
+
+        if len(related_model_normal_fields_name) == 1:
+            fk_model_label_name = related_model_normal_fields_name[0]
+            return field_related_model_name, fk_model_label_name, fk_field_name
+        elif field_related_model_name != 'Topology':
+            print('related_model_fields:', self.related_model_fields)
+            print('related_model_normal_fields_name:', related_model_normal_fields_name)
+            raise Exception("len(related_model_normal_fields_name) !=1 whereas exactly one field amongst {} should exist in {} model".format(list_label_field, self.field_related_model_name))
+
+    def build_fk_to_insert_dict(self, api_label, id):
+        old_value = [cat[api_label] for cat in self.fk_not_integrated[self.f_related_model_name]['data'] if cat['id'] == id]
+
+        if not old_value:
+            print('old_value: ', old_value)
+            warn('No old_value found')
+        elif len(old_value) > 1:
+            print('old_value: ', old_value)
+            raise Exception('Multiple categories found for given id!')
+        else:
+            new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][self.model_to_import_name][self.f_related_model_name][old_value[0]]
+            self.fk_to_insert[self.fk_model_label_name] = new_value
+
+            return self.fk_to_insert
+
+    def query_fk_not_integrated_dict(self, type, field):
+        api_label = self.fk_not_integrated[self.f_related_model_name]['api_label']
+        print('api_label: ', api_label)
+        old_fk_id = self.api_data[self.index][self.fk_field_name]
+        print('old_fk_id: ', old_fk_id)
+
+        if old_fk_id:
+            if isinstance(old_fk_id, list):
+                old_fk_id_list = old_fk_id
+            else:
+                old_fk_id_list = [old_fk_id]
+
+            for old_fk_id in old_fk_id_list:
+                self.fk_to_insert = self.build_fk_to_insert_dict(api_label=api_label, id=old_fk_id)
+
+                if self.fk_model_label_name in self.fk_to_insert:
+                    if type == 'many_to_many':
+                        mtm_to_add = field.related_model.objects.get(**self.fk_to_insert)
+                        print('mtm_to_add: ', mtm_to_add)
+                        getattr(self.obj_to_insert, field.name).add(mtm_to_add)
+                    elif type == 'many_to_one':
+                        self.dict_to_insert[self.fk_field_name] = field.related_model.objects.get(**self.fk_to_insert)
+                        return self.dict_to_insert
 
     def import_attachments(self):
         if 'attachments' in self.api_data[self.index] and len(self.api_data[self.index]['attachments']) > 0:

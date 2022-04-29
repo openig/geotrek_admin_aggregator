@@ -163,7 +163,7 @@ source_cat_to_gag_cat = {
                 "Sommet": "Forêt",
                 "Pastoralisme": "Agriculture et élevage",
                 "Lac et glacier": "Forêt",
-            }
+            },
         },
     },
     "PNC": {
@@ -296,6 +296,16 @@ source_cat_to_gag_cat = {
                 "Enduro VTT": "VTT",
             },
             "ReservationSystem": {
+            },
+            "Theme": {
+                "Flore": "Faune et flore",
+                "Faune": "Faune et flore",
+                "Géologie": "Eau et géologie",
+                "Point de vue": "Forêt",
+                "Eau": "Eau et géologie",
+                "Histoire et patrimoine": "Histoire et culture",
+                "Savoir-faire": "Histoire et culture",
+                "Agropastoralisme": "Agriculture et élevage",
             },
         },
     },
