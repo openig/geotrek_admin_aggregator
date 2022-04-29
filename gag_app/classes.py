@@ -231,6 +231,9 @@ class UpdateAndInsert():
 
                 new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][self.model_to_import_name][self.f_related_model_name][old_value]
 
+                print('old_value: ', old_value)
+                print('new_value: ', new_value)
+
                 self.fk_to_insert[self.fk_model_label_name] = new_value
                 print('self.fk_to_insert: ', self.fk_to_insert)
                 self.dict_to_insert[self.fk_field_name] = field.related_model.objects.get(**self.fk_to_insert)
@@ -282,6 +285,9 @@ class UpdateAndInsert():
             new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][self.model_to_import_name][self.f_related_model_name][old_value[0]]
             self.fk_to_insert[self.fk_model_label_name] = new_value
 
+            print('old_value: ', old_value)
+            print('new_value: ', new_value)
+
             return self.fk_to_insert
 
     def query_fk_not_integrated_dict(self, type, field):
@@ -298,6 +304,7 @@ class UpdateAndInsert():
 
             for old_fk_id in old_fk_id_list:
                 self.fk_to_insert = self.build_fk_to_insert_dict(api_label=api_label, id=old_fk_id)
+                print('self.fk_to_insert: ', self.fk_to_insert)
 
                 if self.fk_model_label_name in self.fk_to_insert:
                     if type == 'many_to_many':
