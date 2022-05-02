@@ -2,10 +2,11 @@ import requests
 import os
 import urllib.request
 from mimetypes import guess_type
+from warnings import warn
 from geotrek.common.models import FileType, Attachment
 from geotrek.authent.models import User
+from geotrek.trekking.models import Trek, OrderedTrekChild
 from django.conf import settings
-from warnings import warn
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from gag_app.env import model_to_import, source_cat_to_gag_cat, core_topology, common, list_label_field
@@ -367,6 +368,25 @@ class UpdateAndInsert():
                 attachment_to_add, created = Attachment.objects.update_or_create(uuid=attachment_dict['uuid'], defaults={**attachment_dict})
                 self.obj_to_insert.attachments.add(attachment_to_add, bulk=False)
 
+    def get_treks_relationships(self):
+        signal = False
+
+        if self.api_data[self.index]['children']:
+            print('children: ', self.api_data[self.index]['children'])
+
+            for old_id in self.api_data[self.index]['children']:
+                uuid = [ad['uuid'] for ad in self.api_data if ad['id'] == old_id]
+                if uuid:
+                    child = Trek.objects.get(uuid=uuid[0])
+                    parent = Trek.objects.get(uuid=self.api_data[self.index]['uuid'])
+                    to_add = OrderedTrekChild(child=child, parent=parent)
+                    parent.trek_children.add(to_add, bulk=False)
+                    signal = True
+                else:
+                    print(f"{old_id} trek may be not published, therefore isn't in API results")
+
+        return signal
+
     def run(self):
         for self.index in range(len(self.api_data)):
             #print('self.api_data[self.index]: ', self.api_data[self.index])
@@ -386,3 +406,9 @@ class UpdateAndInsert():
             self.import_attachments()
 
             print("\n{} OBJECT N°{} INSERTED!\n".format(self.model_lowercase.upper(), self.index+1))
+
+        for self.index in range(len(self.api_data)):
+            if self.model_to_import_name == 'Trek':
+                signal = self.get_treks_relationships()
+                if signal:
+                    print("\nRELATIONSHIPS OF {} OBJECT N°{} CREATED!\n".format(self.model_lowercase.upper(), self.index+1))

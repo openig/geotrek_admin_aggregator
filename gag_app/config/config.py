@@ -1,9 +1,9 @@
 # URL du Geotrek-admin source :
-GADMIN_BASE_URL = 'geotrek-admin.cevennes-parcnational.net'
+GADMIN_BASE_URL = 'geotrekdemo.ecrins-parcnational.fr'
 
 # Si nécessaire, nom du (ou des) portail(s) de la base source
 # dont on veut récupérer les données :
-PORTALS = ['DEP_48']
+PORTALS = None
 
 # Attribution des données à une structure.
 # Doit correspondre à une entrée dans la table "authent_structure".
@@ -12,7 +12,7 @@ PORTALS = ['DEP_48']
 # Il s'agit uniquement d'attribuer les données importées à une structure
 # dans la base aggregator.
 # Ne dépend donc pas des structures enregistrées dans la BDD source
-AUTHENT_STRUCTURE = 'PNC'
+AUTHENT_STRUCTURE = 'PNE'
 
 # Nom de l'user auquel sera attribuée la création des médias
 # Par exemple un compte d'administration.
