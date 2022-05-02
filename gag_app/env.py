@@ -107,8 +107,8 @@ model_to_import = {
             "InformationDesk": "informationdesk",
             "RecordSource": "source",
             "Label": "label",
-            "Rating": "trek_rating",
             "Accessibility": "trek_accessibility",
+            # "Rating": "trek_rating",
         },
     }
 }
