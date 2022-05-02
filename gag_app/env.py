@@ -65,7 +65,7 @@ core_topology = {
 model_to_import = {
     "POI": {
         "db_column_api_field": {},
-        "fk_not_integrated": {
+        "fk_mapped": {
             "POIType": "poi_type",
         },
     },
@@ -95,11 +95,20 @@ model_to_import = {
             "eid2": "second_external_id",
             "reservation_id": "reservation_id",
         },
-        "fk_not_integrated": {
+        "fk_mapped": {
             "DifficultyLevel": "trek_difficulty",
             "Practice": "trek_practice",
             "Route": "trek_route",
             "ReservationSystem": "reservationsystem",
+            "Theme": "theme",
+            "TrekNetwork": "trek_network",
+        },
+        "fk_not_mapped": {
+            "InformationDesk": "informationdesk",
+            "RecordSource": "source",
+            "Label": "label",
+            "Accessibility": "trek_accessibility",
+            # "Rating": "trek_rating",
         },
     }
 }
@@ -144,6 +153,25 @@ source_cat_to_gag_cat = {
             "ReservationSystem": {
                 "OpenSystem": "OpenSystem",
                 "Itinérance": "Gîtes de France"
+            },
+            "Theme": {
+                "Flore": "Faune et flore",
+                "Faune": "Faune et flore",
+                "Géologie": "Eau et géologie",
+                "Architecture": "Architecture et village",
+                "Point de vue": "Forêt",
+                "Refuge": "Architecture et village",
+                "Archéologie et histoire": "Histoire et culture",
+                "Sommet": "Forêt",
+                "Pastoralisme": "Agriculture et élevage",
+                "Lac et glacier": "Forêt",
+            },
+            "TrekNetwork": {
+                "PR": "Picto PR jaune",
+                "GRP": "GRP®",
+                "VTT": "VTT",
+                "Piste équestre": "Équestre",
+                "GR": "GR®",
             },
         },
     },
@@ -190,6 +218,40 @@ source_cat_to_gag_cat = {
                 "Itinérance": "Gîtes de France",
                 "FFCAM": "FFCAM",
             },
+            "Theme": {
+                "Faune et flore": "Faune et flore",
+                "Histoire et culture": "Histoire et culture",
+                "Eau et géologie": "Eau et géologie",
+                "Forêt": "Forêt",
+                "Histoire et culture": "Histoire et culture",
+                "Architecture et village": "Architecture et village",
+                "Agriculture et élevage": "Agriculture et élevage",
+                "Causses et Cévennes / UNESCO": "Causses et Cévennes / UNESCO",
+                "Ciel étoilé": "Ciel étoilé",
+            },
+            "TrekNetwork": {
+                "160 km": "160 km",
+                "Balisage peinture bleu": "Balisage peinture bleu",
+                "Balisage peinture jaune": "Balisage peinture jaune",
+                "Balisage peinture verte": "Balisage peinture verte",
+                "Barque page": "Barque page",
+                "GRP®": "GRP®",
+                "GR®": "GR®",
+                "GTMC VTT": "GTMC VTT",
+                "Interprétation": "Interprétation",
+                "Picto PR bleu": "Picto PR bleu",
+                "Picto PR jaune": "Picto PR jaune",
+                "Picto PR vert": "Picto PR vert",
+                "Réseau Pôle nature Aigoual": "Réseau Pôle nature Aigoual",
+                "Trail PPN Mt Lozère": "Trail PPN Mt Lozère",
+                "VTT": "VTT",
+                "VTT bleu": "VTT bleu",
+                "VTT noir": "VTT noir",
+                "VTT rouge": "VTT rouge",
+                "VTT vert": "VTT vert",
+                "découverte PNC": "découverte PNC",
+                "Équestre": "Équestre",
+            },
         },
     },
     "Conseil départemental de la Lozère": {
@@ -229,6 +291,19 @@ source_cat_to_gag_cat = {
                 "OpenSystem": "OpenSystem",
                 "Gites de France": "Gîtes de France"
             },
+            "Theme": {
+                "Faune et Flore": "Faune et flore",
+                "Accessibilité handicap": "Histoire et culture",
+                "Eau et géologie": "Eau et géologie",
+                "Forêt": "Forêt",
+                "Histoire et culture": "Histoire et culture",
+                "Architecture et village": "Architecture et village",
+                "Cols et Sommets": "Forêt",
+            },
+            "TrekNetwork": {
+                "VTT": "VTT",
+                "GR": "GR®",
+            }
         },
     },
     "PNRGCA": {
@@ -277,6 +352,28 @@ source_cat_to_gag_cat = {
                 "Enduro VTT": "VTT",
             },
             "ReservationSystem": {
+            },
+            "Theme": {
+                "Flore": "Faune et flore",
+                "Faune": "Faune et flore",
+                "Géologie": "Eau et géologie",
+                "Point de vue": "Forêt",
+                "Eau": "Eau et géologie",
+                "Histoire et patrimoine": "Histoire et culture",
+                "Savoir-faire": "Histoire et culture",
+                "Agropastoralisme": "Agriculture et élevage",
+            },
+            "TrekNetwork": {
+                "PR": "Picto PR jaune",
+                "GRP": "GRP®",
+                "VTT": "VTT",
+                "Equestre": "Équestre",
+                "GR": "GR®",
+                "Mr Clapassou": "Picto PR bleu",
+                "Echelles": "Barque page",
+                "Grands Causses Espace Trail": "Trail PPN Mt Lozère",
+                "Voie Verte": "VTT vert",
+                "ENS Aveyron": "Réseau Pôle nature Aigoual",
             },
         },
     },

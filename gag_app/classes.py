@@ -2,10 +2,11 @@ import requests
 import os
 import urllib.request
 from mimetypes import guess_type
+from warnings import warn
 from geotrek.common.models import FileType, Attachment
 from geotrek.authent.models import User
+from geotrek.trekking.models import Trek, OrderedTrekChild
 from django.conf import settings
-from warnings import warn
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from gag_app.env import model_to_import, source_cat_to_gag_cat, core_topology, common, list_label_field
@@ -91,30 +92,35 @@ class ParserAPIv2ImportContentTypeModel():
 
         return last_aggregation_datetime.strftime('%Y-%m-%d')
 
-    def get_fk_not_integrated(self):
-        fk_not_integrated = {}
+    def get_fk_api_values(self):
+        fk_api_values = {}
 
-        for fk_model_name, api_fk_route in self.model_to_import_properties["fk_not_integrated"].items():
+        all_fk_fields_to_get = {**model_to_import[self.model_to_import_name]["fk_mapped"], **model_to_import[self.model_to_import_name]["fk_not_mapped"]}
+
+        for fk_model_name, api_fk_route in all_fk_fields_to_get.items():
             fk_results = self.query_api(additional_params={"language": GAG_BASE_LANGUAGE}, api_route=api_fk_route)
             print('fk_results:', fk_results)
 
             if fk_results:
-                api_labels = [rk for rk in fk_results[0].keys() if rk in list_label_field]
+                if 'name' in fk_results[0].keys():
+                    api_labels = ['name']
+                else:
+                    api_labels = [rk for rk in fk_results[0].keys() if rk in list_label_field]
 
                 if len(api_labels) == 1:
                     api_label = ''.join(api_labels)
                 else:
-                    print('API response keys:', fk_results.keys())
+                    print('API response keys:', fk_results[0].keys())
                     print('api_labels:', api_labels)
                     raise Exception("len(api_labels) !=1 whereas exactly one column amongst {} should exist in {} API route".format(list_label_field, api_fk_route))
 
                 print('api_label: ', api_label)
-                fk_not_integrated[fk_model_name] = {}
-                fk_not_integrated[fk_model_name]['data'] = fk_results
-                fk_not_integrated[fk_model_name]['api_label'] = api_label
+                fk_api_values[fk_model_name] = {}
+                fk_api_values[fk_model_name]['data'] = fk_results
+                fk_api_values[fk_model_name]['api_label'] = api_label
 
-        print('fk_not_integrated: ', fk_not_integrated)
-        return fk_not_integrated
+        print('fk_api_values: ', fk_api_values)
+        return fk_api_values
 
     def delete_update_insert_data(self):
         if PORTALS:
@@ -127,14 +133,14 @@ class ParserAPIv2ImportContentTypeModel():
             # Get last import date to only fetch objects updated after it
             self.url_params['updated_after'] = self.get_last_import_datetime()  # VRAIMENT BESOIN D'UNE FONCTION ?
         else:
-            print(f'No {self.current_model} existing for {self.structure} structure')
+            print(f'No {self.current_model} already existing for {self.structure} structure in GAG database, thus no update or delete operations needed')
 
         # Data insertion
 
         api_data = self.query_api()
 
         if api_data:
-            self.fk_not_integrated = self.get_fk_not_integrated()
+            self.fk_api_values = self.get_fk_api_values()
 
             UpdateAndInsert(
                 api_data=api_data,
@@ -145,12 +151,12 @@ class ParserAPIv2ImportContentTypeModel():
                 structure=self.structure,
                 app_label=self.app_label,
                 model_lowercase=self.model_lowercase,
-                fk_not_integrated=self.fk_not_integrated
+                fk_api_values=self.fk_api_values
             ).run()
 
 
 class UpdateAndInsert():
-    def __init__(self, api_data, current_model, model_to_import_name, model_to_import_properties, coretopology_fields, structure, app_label, model_lowercase, fk_not_integrated):
+    def __init__(self, api_data, current_model, model_to_import_name, model_to_import_properties, coretopology_fields, structure, app_label, model_lowercase, fk_api_values):
         self.api_data = api_data
         self.current_model = current_model
         self.model_to_import_name = model_to_import_name
@@ -159,26 +165,26 @@ class UpdateAndInsert():
         self.structure = structure
         self.app_label = app_label
         self.model_lowercase = model_lowercase
-        self.fk_not_integrated = fk_not_integrated
+        self.fk_api_values = fk_api_values
 
         all_fields = self.current_model._meta.get_fields(include_parents=False)  # toutes les colonnes du modèle
-        print('all_fields: ', all_fields)
+        # print('all_fields: ', all_fields)
 
-        self.fkeys_fields = [f for f in all_fields if f.many_to_one]
+        self.many_to_one_fields = [f for f in all_fields if f.many_to_one]
+        self.many_to_many_fields = [f for f in all_fields if f.many_to_many]
         self.one_to_one_fields = [f for f in all_fields if f.one_to_one]
         self.normal_fields = [f for f in all_fields if f.is_relation is False]
 
-        # print('fkey_fields: ', fkeys_fields)
-        print('normal_fields: ', self.normal_fields)
+        # print('normal_fields: ', self.normal_fields)
 
     def one_to_one_fields_build_dict(self):
         for f in self.one_to_one_fields:
             print(f)
             fk_to_insert = {}
             obj_content_type = ContentType.objects.get_for_model(f.related_model)
-            f_related_model = f'{obj_content_type.app_label}_{obj_content_type.model}'
+            f_related_model_name = f'{obj_content_type.app_label}_{obj_content_type.model}'
 
-            if f_related_model == 'core_topology' and self.api_data[self.index]['geometry'] is not None:
+            if f_related_model_name == 'core_topology' and self.api_data[self.index]['geometry'] is not None:
                 print(self.model_to_import_name, ': topology exists')
                 fk_to_insert['kind'] = self.model_to_import_name.upper()
 
@@ -211,67 +217,110 @@ class UpdateAndInsert():
 
         return self.dict_to_insert
 
-    def fkeys_fields_build_dict(self):
-        for f in self.fkeys_fields:
-            print('f: ', f)
-            fk_to_insert = {}
-            f_related_model = f.related_model.__name__
-            print('f_related_model: ', f_related_model)
-            related_model_fields = f.related_model._meta.get_fields()
-            related_model_normal_fields_name = [f.name for f in related_model_fields if f.is_relation is False and f.name in list_label_field]
-            print('related_model_normal_fields_name: ', related_model_normal_fields_name)
-            fk_field = f.name
-            print("fk_field: ", fk_field)
+    def many_to_one_fields_build_dict(self):
+        for field in self.many_to_one_fields:
+            self.fk_to_insert = {}
+            self.f_related_model_name, self.fk_model_label_name, self.fk_field_name = self.get_names_api_label_field_and_django_fk_field(field)
 
-            if len(related_model_normal_fields_name) == 1:
-                name_field = related_model_normal_fields_name[0]
-            elif f_related_model != 'Topology':
-                print('related_model_fields:', related_model_fields)
-                print('related_model_normal_fields_name:', related_model_normal_fields_name)
-                raise Exception("len(related_model_normal_fields_name) !=1 whereas exactly one field amongst {} should exist in {} model".format(list_label_field, f_related_model))
-
-            if f_related_model == 'Structure':
+            if self.f_related_model_name == 'Structure':
                 self.dict_to_insert['structure'] = self.structure
-                # self.obj_to_insert.structure = self.structure
+            # elif self.fk_field_name in model_to_import[self.model_to_import_name]["db_column_api_field"]:
+            #     api_field = model_to_import[self.model_to_import_name]["db_column_api_field"][self.fk_field_name]
 
-            elif f_related_model in self.fk_not_integrated:
-                print('FK_NOT_INTEGRATED')
-                api_label = self.fk_not_integrated[f_related_model]['api_label']
-                print('api_label: ', api_label)
-                old_fk_id = self.api_data[self.index][fk_field]
-                print('old_fk_id: ', old_fk_id)
-                old_value = [cat[api_label] for cat in self.fk_not_integrated[f_related_model]['data'] if cat['id'] == old_fk_id]
+            #     if type(api_field) is list:
+            #         old_value = self.api_data[self.index][api_field[0]][api_field[1]]
+            #     else:
+            #         old_value = self.api_data[self.index][api_field]
 
-                if not old_value:
-                    print('old_value: ', old_value)
-                    warn('No old_value found')
-                elif len(old_value) > 1:
-                    print('old_value: ', old_value)
-                    raise Exception('Multiple categories found for given id!')
-                else:
-                    new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][self.model_to_import_name][f_related_model][old_value[0]]
-                    fk_to_insert[name_field] = new_value
-                    self.dict_to_insert[fk_field] = f.related_model.objects.get(**fk_to_insert)
-                    # setattr(self.obj_to_insert, fk_field, f.related_model.objects.get(**fk_to_insert))
+            #     new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][self.model_to_import_name][self.f_related_model_name][old_value]
 
-            elif fk_field in model_to_import[self.model_to_import_name]["db_column_api_field"]:
-                api_field = model_to_import[self.model_to_import_name]["db_column_api_field"][fk_field]
+            #     print('old_value: ', old_value)
+            #     print('new_value: ', new_value)
 
-                if type(api_field) is list:
-                    old_value = self.api_data[self.index][api_field[0]][api_field[1]]
-                else:
-                    old_value = self.api_data[self.index][api_field]
-
-                new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][self.model_to_import_name][f_related_model][old_value]
-
-                fk_to_insert[name_field] = new_value
-                print('fk_to_insert: ', fk_to_insert)
-                self.dict_to_insert[fk_field] = f.related_model.objects.get(**fk_to_insert)
-                # setattr(self.obj_to_insert, fk_field, f.related_model.objects.get(**fk_to_insert))
+            #     self.fk_to_insert[self.fk_model_label_name] = new_value
+            #     print('self.fk_to_insert: ', self.fk_to_insert)
+            #     self.dict_to_insert[self.fk_field_name] = field.related_model.objects.get(**self.fk_to_insert)
+            #     raise Exception('LOOK HERE!')
+            elif self.f_related_model_name in self.fk_api_values:
+                self.query_fk_api_values_dict(relation_type='many_to_one', field=field)
             else:
                 warn("Related model doesn't conform to any handled possibility.")
 
         return self.dict_to_insert
+
+    def many_to_many_fields_build_dict(self):
+        for field in self.many_to_many_fields:
+            self.fk_to_insert = {}
+            self.f_related_model_name, self.fk_model_label_name, self.fk_field_name = self.get_names_api_label_field_and_django_fk_field(field)
+
+            if self.f_related_model_name in self.fk_api_values:
+                self.query_fk_api_values_dict(relation_type='many_to_many', field=field)
+            else:
+                warn("Related model doesn't conform to any handled possibility.")
+
+    def get_names_api_label_field_and_django_fk_field(self, field):
+        print('field: ', field)
+        field_related_model_name = field.related_model.__name__
+        print('field_related_model_name: ', field_related_model_name)
+        related_model_fields = field.related_model._meta.get_fields()
+        related_model_normal_fields_name = [f.name for f in related_model_fields if f.is_relation is False and f.name in list_label_field]
+        print('related_model_normal_fields_name: ', related_model_normal_fields_name)
+        fk_field_name = field.name
+        print("fk_field_name: ", fk_field_name)
+
+        if len(related_model_normal_fields_name) == 1:
+            fk_model_label_name = related_model_normal_fields_name[0]
+            return field_related_model_name, fk_model_label_name, fk_field_name
+        elif field_related_model_name != 'Topology':
+            print('related_model_fields:', self.related_model_fields)
+            print('related_model_normal_fields_name:', related_model_normal_fields_name)
+            raise Exception("len(related_model_normal_fields_name) !=1 whereas exactly one field amongst {} should exist in {} model".format(list_label_field, self.field_related_model_name))
+
+    def build_fk_to_insert_dict(self, api_label, id):
+        fk_to_insert = {}
+        old_value = [cat[api_label] for cat in self.fk_api_values[self.f_related_model_name]['data'] if cat['id'] == id]
+
+        if not old_value:
+            print('old_value: ', old_value)
+            warn('No old_value found')
+        elif len(old_value) > 1:
+            print('old_value: ', old_value)
+            raise Exception('Multiple categories found for given id!')
+        elif self.f_related_model_name in model_to_import[self.model_to_import_name]["fk_mapped"]:
+            new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][self.model_to_import_name][self.f_related_model_name][old_value[0]]
+
+            print('old_value: ', old_value)
+            print('new_value: ', new_value)
+            fk_to_insert[self.fk_model_label_name] = new_value
+        elif self.f_related_model_name in model_to_import[self.model_to_import_name]["fk_not_mapped"]:
+            fk_to_insert[self.fk_model_label_name] = old_value[0]
+
+        return fk_to_insert
+
+    def query_fk_api_values_dict(self, relation_type, field):
+        api_label = self.fk_api_values[self.f_related_model_name]['api_label']
+        print('api_label: ', api_label)
+        old_fk_id = self.api_data[self.index][self.fk_field_name]
+        print('old_fk_id: ', old_fk_id)
+
+        if old_fk_id:
+            if isinstance(old_fk_id, list):
+                old_fk_id_list = old_fk_id
+            else:
+                old_fk_id_list = [old_fk_id]
+
+            for old_fk_id in old_fk_id_list:
+                fk_to_insert = self.build_fk_to_insert_dict(api_label=api_label, id=old_fk_id)
+                print('fk_to_insert: ', fk_to_insert)
+
+                if self.fk_model_label_name in fk_to_insert:
+                    if relation_type == 'many_to_many':
+                        mtm_to_add = field.related_model.objects.get(**fk_to_insert)
+                        print('mtm_to_add: ', mtm_to_add)
+                        getattr(self.obj_to_insert, field.name).add(mtm_to_add)
+                    elif relation_type == 'many_to_one':
+                        self.dict_to_insert[self.fk_field_name] = field.related_model.objects.get(**fk_to_insert)
+                        return self.dict_to_insert
 
     def import_attachments(self):
         if 'attachments' in self.api_data[self.index] and len(self.api_data[self.index]['attachments']) > 0:
@@ -325,16 +374,37 @@ class UpdateAndInsert():
                 attachment_to_add, created = Attachment.objects.update_or_create(uuid=attachment_dict['uuid'], defaults={**attachment_dict})
                 self.obj_to_insert.attachments.add(attachment_to_add, bulk=False)
 
+    def get_treks_relationships(self):
+        signal = False
+
+        if self.api_data[self.index]['children']:
+            print('children: ', self.api_data[self.index]['children'])
+
+            for old_id in self.api_data[self.index]['children']:
+                uuid = [ad['uuid'] for ad in self.api_data if ad['id'] == old_id]
+                if uuid:
+                    child = Trek.objects.get(uuid=uuid[0])
+                    parent = Trek.objects.get(uuid=self.api_data[self.index]['uuid'])
+                    to_add = OrderedTrekChild(child=child, parent=parent)
+                    parent.trek_children.add(to_add, bulk=False)
+                    signal = True
+                else:
+                    print(f"{old_id} trek may be not published, therefore isn't in API results")
+
+        return signal
+
     def run(self):
         for self.index in range(len(self.api_data)):
-            print('self.api_data[self.index]: ', self.api_data[self.index])
+            # print('self.api_data[self.index]: ', self.api_data[self.index])
             self.dict_to_insert = {}
 
             self.dict_to_insert = self.one_to_one_fields_build_dict()
             self.dict_to_insert = self.normal_fields_build_dict()
-            self.dict_to_insert = self.fkeys_fields_build_dict()
+            self.dict_to_insert = self.many_to_one_fields_build_dict()
 
             self.obj_to_insert, created = self.current_model.objects.update_or_create(uuid=self.dict_to_insert['uuid'], defaults={**self.dict_to_insert})
+
+            self.many_to_many_fields_build_dict()
 
             print('self.obj_to_insert: ', vars(self.obj_to_insert))
             self.obj_to_insert.save()
@@ -342,3 +412,9 @@ class UpdateAndInsert():
             self.import_attachments()
 
             print("\n{} OBJECT N°{} INSERTED!\n".format(self.model_lowercase.upper(), self.index+1))
+
+        for self.index in range(len(self.api_data)):
+            if self.model_to_import_name == 'Trek':
+                signal = self.get_treks_relationships()
+                if signal:
+                    print("\nRELATIONSHIPS OF {} OBJECT N°{} CREATED!\n".format(self.model_lowercase.upper(), self.index+1))
