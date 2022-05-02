@@ -65,7 +65,7 @@ core_topology = {
 model_to_import = {
     "POI": {
         "db_column_api_field": {},
-        "fk_not_integrated": {
+        "fk_mapped": {
             "POIType": "poi_type",
         },
     },
@@ -95,18 +95,20 @@ model_to_import = {
             "eid2": "second_external_id",
             "reservation_id": "reservation_id",
         },
-        "fk_not_integrated": {
+        "fk_mapped": {
             "DifficultyLevel": "trek_difficulty",
             "Practice": "trek_practice",
             "Route": "trek_route",
             "ReservationSystem": "reservationsystem",
             "Theme": "theme",
             "TrekNetwork": "trek_network",
-            # "Rating": "trek_rating",
-            # "Accessibility": "trek_accessibility",
-            # "InformationDesk": "informationdesk",
-            # "RecordSource": "source",
-            # "Label": "label",
+        },
+        "fk_not_mapped": {
+            "InformationDesk": "informationdesk",
+            "RecordSource": "source",
+            "Label": "label",
+            "Rating": "trek_rating",
+            "Accessibility": "trek_accessibility",
         },
     }
 }
