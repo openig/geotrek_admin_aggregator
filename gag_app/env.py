@@ -49,6 +49,14 @@ common = {
         "attachment_link": "",
         "marque": False,
     },
+    "fk_mapped": {
+        "ReservationSystem": "reservationsystem",
+        "Theme": "theme",
+    },
+    "fk_not_mapped": {
+        "InformationDesk": "informationdesk",
+        "RecordSource": "source",
+    },
 }
 
 core_topology = {
@@ -99,13 +107,9 @@ model_to_import = {
             "DifficultyLevel": "trek_difficulty",
             "Practice": "trek_practice",
             "Route": "trek_route",
-            "ReservationSystem": "reservationsystem",
-            "Theme": "theme",
             "TrekNetwork": "trek_network",
         },
         "fk_not_mapped": {
-            "InformationDesk": "informationdesk",
-            "RecordSource": "source",
             "Label": "label",
             "Accessibility": "trek_accessibility",
             # "Rating": "trek_rating",

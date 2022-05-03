@@ -92,10 +92,15 @@ class ParserAPIv2ImportContentTypeModel():
 
         return last_aggregation_datetime.strftime('%Y-%m-%d')
 
-    def get_fk_api_values(self):
+    def get_fk_api_values(self, all_fields):
         fk_api_values = {}
+        relation_fields_names = [f.related_model.__name__ for f in all_fields if f.is_relation]
+        fk_mapped = {**common["fk_mapped"], **model_to_import[self.model_to_import_name]["fk_mapped"]}
+        fk_not_mapped = {**common["fk_not_mapped"], **model_to_import[self.model_to_import_name]["fk_not_mapped"]}
+        self.fk_mapped = {k:v for k,v in fk_mapped.items() if k in relation_fields_names}
+        self.fk_not_mapped = {k:v for k,v in fk_not_mapped.items() if k in relation_fields_names}
 
-        all_fk_fields_to_get = {**model_to_import[self.model_to_import_name]["fk_mapped"], **model_to_import[self.model_to_import_name]["fk_not_mapped"]}
+        all_fk_fields_to_get = {**self.fk_mapped, **self.fk_not_mapped}
 
         for fk_model_name, api_fk_route in all_fk_fields_to_get.items():
             fk_results = self.query_api(additional_params={"language": GAG_BASE_LANGUAGE}, api_route=api_fk_route)
@@ -133,14 +138,17 @@ class ParserAPIv2ImportContentTypeModel():
             # Get last import date to only fetch objects updated after it
             self.url_params['updated_after'] = self.get_last_import_datetime()  # VRAIMENT BESOIN D'UNE FONCTION ?
         else:
-            print(f'No {self.current_model} already existing for {self.structure} structure in GAG database, thus no update or delete operations needed')
+            print(f'No {self.current_model.__name__} already existing for {self.structure} structure in GAG database, thus no update or delete operations needed, skipping to insertion')
 
         # Data insertion
 
         api_data = self.query_api()
 
         if api_data:
-            self.fk_api_values = self.get_fk_api_values()
+            all_fields = self.current_model._meta.get_fields(include_parents=False)  # toutes les colonnes du modèle
+            # print('all_fields: ', all_fields)
+
+            fk_api_values = self.get_fk_api_values(all_fields)
 
             UpdateAndInsert(
                 api_data=api_data,
@@ -151,12 +159,15 @@ class ParserAPIv2ImportContentTypeModel():
                 structure=self.structure,
                 app_label=self.app_label,
                 model_lowercase=self.model_lowercase,
-                fk_api_values=self.fk_api_values
+                fk_api_values=fk_api_values,
+                all_fields=all_fields,
+                fk_mapped=self.fk_mapped,
+                fk_not_mapped=self.fk_not_mapped,
             ).run()
 
 
 class UpdateAndInsert():
-    def __init__(self, api_data, current_model, model_to_import_name, model_to_import_properties, coretopology_fields, structure, app_label, model_lowercase, fk_api_values):
+    def __init__(self, api_data, current_model, model_to_import_name, model_to_import_properties, coretopology_fields, structure, app_label, model_lowercase, fk_api_values, all_fields, fk_mapped, fk_not_mapped):
         self.api_data = api_data
         self.current_model = current_model
         self.model_to_import_name = model_to_import_name
@@ -166,9 +177,9 @@ class UpdateAndInsert():
         self.app_label = app_label
         self.model_lowercase = model_lowercase
         self.fk_api_values = fk_api_values
-
-        all_fields = self.current_model._meta.get_fields(include_parents=False)  # toutes les colonnes du modèle
-        # print('all_fields: ', all_fields)
+        all_fields = all_fields
+        self.fk_mapped = fk_mapped
+        self.fk_not_mapped = fk_not_mapped
 
         self.many_to_one_fields = [f for f in all_fields if f.many_to_one]
         self.many_to_many_fields = [f for f in all_fields if f.many_to_many]
@@ -286,13 +297,13 @@ class UpdateAndInsert():
         elif len(old_value) > 1:
             print('old_value: ', old_value)
             raise Exception('Multiple categories found for given id!')
-        elif self.f_related_model_name in model_to_import[self.model_to_import_name]["fk_mapped"]:
+        elif self.f_related_model_name in self.fk_mapped:
             new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][self.model_to_import_name][self.f_related_model_name][old_value[0]]
 
             print('old_value: ', old_value)
             print('new_value: ', new_value)
             fk_to_insert[self.fk_model_label_name] = new_value
-        elif self.f_related_model_name in model_to_import[self.model_to_import_name]["fk_not_mapped"]:
+        elif self.f_related_model_name in self.fk_not_mapped:
             fk_to_insert[self.fk_model_label_name] = old_value[0]
 
         return fk_to_insert
@@ -409,7 +420,7 @@ class UpdateAndInsert():
             print('self.obj_to_insert: ', vars(self.obj_to_insert))
             self.obj_to_insert.save()
 
-            self.import_attachments()
+            #self.import_attachments()
 
             print("\n{} OBJECT N°{} INSERTED!\n".format(self.model_lowercase.upper(), self.index+1))
 
