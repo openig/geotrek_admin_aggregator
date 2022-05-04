@@ -1,17 +1,21 @@
-import requests
 import os
 import urllib.request
 from mimetypes import guess_type
 from warnings import warn
-from geotrek.common.models import FileType, Attachment
-from geotrek.authent.models import User
-from geotrek.trekking.models import Trek, OrderedTrekChild
-from django.conf import settings
+
+import requests
 from django.apps import apps
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from gag_app.env import model_to_import, source_cat_to_gag_cat, core_topology, common, list_label_field
-from gag_app.config.config import AUTHENT_STRUCTURE, AUTH_USER, GAG_BASE_LANGUAGE, PORTALS
-from gag_app.utils import geom_to_wkt, get_api_field, deserialize_translated_fields
+from geotrek.authent.models import User
+from geotrek.common.models import Attachment, FileType
+from geotrek.trekking.models import OrderedTrekChild, Trek
+
+from gag_app.config.config import (AUTH_USER, AUTHENT_STRUCTURE,
+                                   GAG_BASE_LANGUAGE, PORTALS)
+from gag_app.env import (common, core_topology, list_label_field,
+                         model_to_import, source_cat_to_gag_cat)
+from gag_app.utils import geom_to_wkt
 
 
 class ParserAPIv2ImportContentTypeModel():
@@ -93,6 +97,33 @@ class ParserAPIv2ImportContentTypeModel():
 
         return last_aggregation_datetime.strftime('%Y-%m-%d')
 
+    def process_touristic_content_type_api_data(self, fk_results):
+        api_label = 'label'
+        touristic_content_type_api_data = []
+        for category in fk_results:
+            for cat_list in category['types']:
+                touristic_content_type_api_data.extend(cat_list['values'])
+
+        return api_label, touristic_content_type_api_data
+
+    def get_fk_api_label(self, fk_results, api_fk_route):
+        if 'name' in fk_results[0].keys():
+            api_labels = ['name']
+        else:
+            api_labels = [rk for rk in fk_results[0].keys() if rk in list_label_field]
+
+        if len(api_labels) == 1:
+            api_label = ''.join(api_labels)
+        else:
+            print('API response keys:', fk_results[0].keys())
+            print('api_labels:', api_labels)
+            raise Exception("len(api_labels) !=1 whereas exactly one column amongst {} should exist in {} API route".format(list_label_field, api_fk_route))
+
+        print('api_label: ', api_label)
+
+        return api_label
+
+
     def get_fk_api_values(self, all_fields):
         fk_api_values = {}
         relation_fields_names = [f.related_model.__name__ for f in all_fields if f.is_relation]
@@ -111,27 +142,9 @@ class ParserAPIv2ImportContentTypeModel():
                 fk_api_values[fk_model_name] = {}
 
                 if fk_model_name in ['TouristicContentType1', 'TouristicContentType2']:
-                    api_label = 'label'
-                    touristic_content_type_api_data = []
-                    for category in fk_results:
-                        for cat_list in category['types']:
-                            touristic_content_type_api_data.extend(cat_list['values'])
-
-                    fk_results = touristic_content_type_api_data
+                    api_label, fk_results = self.process_touristic_content_type_api_data(fk_results)
                 else:
-                    if 'name' in fk_results[0].keys():
-                        api_labels = ['name']
-                    else:
-                        api_labels = [rk for rk in fk_results[0].keys() if rk in list_label_field]
-
-                    if len(api_labels) == 1:
-                        api_label = ''.join(api_labels)
-                    else:
-                        print('API response keys:', fk_results[0].keys())
-                        print('api_labels:', api_labels)
-                        raise Exception("len(api_labels) !=1 whereas exactly one column amongst {} should exist in {} API route".format(list_label_field, api_fk_route))
-
-                    print('api_label: ', api_label)
+                    api_label = self.get_fk_api_label(fk_results, api_fk_route)
 
                 fk_api_values[fk_model_name]['data'] = fk_results
                 fk_api_values[fk_model_name]['api_label'] = api_label
@@ -200,6 +213,50 @@ class UpdateAndInsert():
 
         # print('normal_fields: ', self.normal_fields)
 
+    def get_api_field(self, api_data, index, f_name, value):
+        print(f_name)
+        if type(value[f_name]) is list and value[f_name][1] in api_data[index][value[f_name][0]]:
+            self.dict_to_insert[f_name] = api_data[index][value[f_name][0]][value[f_name][1]]
+        elif type(value[f_name]) is str:
+            self.dict_to_insert[f_name] = api_data[index][value[f_name]]
+
+    def deserialize_translated_fields(self, api_data, index, f_name):
+        languages_gag = settings.MODELTRANSLATION_LANGUAGES
+        print('languages_gag: ', languages_gag)
+
+        field_is_dict = isinstance(api_data[index][f_name], dict)
+
+        if field_is_dict:
+            self.dict_to_insert[f_name] = api_data[index][f_name][GAG_BASE_LANGUAGE]
+        else:
+            self.dict_to_insert[f_name] = api_data[index][f_name]
+
+        for lan in languages_gag:
+            translated_column_name = f_name + "_" + lan
+            if field_is_dict and lan in api_data[index][f_name]:
+                self.dict_to_insert[translated_column_name] = api_data[index][f_name][lan]
+            elif f_name == "published" and lan == GAG_BASE_LANGUAGE:
+                self.dict_to_insert[translated_column_name] = True
+            elif f_name == "published":
+                self.dict_to_insert[translated_column_name] = False
+            else:
+                self.dict_to_insert[translated_column_name] = ''
+
+    def build_topo_dict(self):
+        print(self.model_to_import_name, ': topology exists')
+        self.dict_to_insert['kind'] = self.model_to_import_name.upper()
+
+        self.dict_to_insert['geom'] = geom_to_wkt(self.api_data[self.index])
+
+        for ctf in self.coretopology_fields:
+            ctf_name = ctf.name
+            if ctf_name in core_topology['db_column_api_field']:
+                self.dict_to_insert[ctf_name] = self.api_data[self.index][core_topology['db_column_api_field'][ctf_name]]
+            elif ctf_name in core_topology['default_values']:
+                self.dict_to_insert[ctf_name] = core_topology['default_values'][ctf_name]
+
+        print('self.dict_to_insert: ', self.dict_to_insert)
+
     def one_to_one_fields_build_dict(self):
         for f in self.one_to_one_fields:
             print(f)
@@ -207,19 +264,7 @@ class UpdateAndInsert():
             f_related_model_name = f'{obj_content_type.app_label}_{obj_content_type.model}'
 
             if f_related_model_name == 'core_topology' and self.api_data[self.index]['geometry'] is not None:
-                print(self.model_to_import_name, ': topology exists')
-                self.dict_to_insert['kind'] = self.model_to_import_name.upper()
-
-                self.dict_to_insert['geom'] = geom_to_wkt(self.api_data[self.index])
-
-                for ctf in self.coretopology_fields:
-                    ctf_name = ctf.name
-                    if ctf_name in core_topology['db_column_api_field']:
-                        self.dict_to_insert[ctf_name] = self.api_data[self.index][core_topology['db_column_api_field'][ctf_name]]
-                    elif ctf_name in core_topology['default_values']:
-                        self.dict_to_insert[ctf_name] = core_topology['default_values'][ctf_name]
-
-                print('self.dict_to_insert: ', self.dict_to_insert)
+                self.build_topo_dict()
 
     def normal_fields_build_dict(self):
         for f in self.normal_fields:
@@ -227,11 +272,11 @@ class UpdateAndInsert():
             print('f_name: ', f_name)
             if f_name in self.api_data[self.index]:
                 if f_name in self.model_to_import_properties['db_column_api_field']:
-                    self.dict_to_insert = get_api_field(self.api_data, self.index, f_name, self.model_to_import_properties['db_column_api_field'], self.dict_to_insert)
+                    self.get_api_field(self.api_data, self.index, f_name, self.model_to_import_properties['db_column_api_field'])
                 elif f_name in common['db_column_api_field']:
-                    self.dict_to_insert = get_api_field(self.api_data, self.index, f_name, common['db_column_api_field'], self.dict_to_insert)
+                    self.get_api_field(self.api_data, self.index, f_name, common['db_column_api_field'])
                 elif f_name in common['languages']:
-                    self.dict_to_insert = deserialize_translated_fields(self.api_data[self.index], f_name, self.dict_to_insert)
+                    self.deserialize_translated_fields(self.api_data, self.index, f_name)
                 elif f_name in common['default_values']:
                     self.dict_to_insert[f_name] = common['default_values'][f_name]
             elif f_name == 'geom':
