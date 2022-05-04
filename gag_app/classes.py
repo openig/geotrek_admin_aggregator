@@ -23,7 +23,7 @@ class ParserAPIv2ImportContentTypeModel():
         self.structure = structure
         self.coretopology_fields = coretopology_fields
         self.url_params = {}
-        self.model_lowercase = self.model_to_import_name.lower()
+        self.model_lowercase = model_to_import_name.lower()
 
         # Get Django model
         self.app_label = ContentType.objects.get(
@@ -32,11 +32,11 @@ class ParserAPIv2ImportContentTypeModel():
         print('app_label: ', self.app_label)
         self.current_model = apps.get_model(
             app_label=self.app_label,
-            model_name=self.model_to_import_name
+            model_name=model_to_import_name
         )
         print('current_model: ', self.current_model)
         # Define request API url
-        self.url = self.api_base_url + self.model_lowercase
+        self.url = api_base_url + self.model_lowercase
 
     def query_api(self, additional_params={}, api_route=''):
         if api_route:
