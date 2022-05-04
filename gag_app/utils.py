@@ -20,19 +20,26 @@ def get_api_field(r, index, f_name, value, dict_to_insert):
     return dict_to_insert
 
 
-def deserialize_translated_fields(r_index, f_name, dict_to_insert):
+def deserialize_translated_fields(api_data_index, f_name, dict_to_insert):
     from gag_app.config.config import GAG_BASE_LANGUAGE
     from django.conf import settings
 
     languages_gag = settings.MODELTRANSLATION_LANGUAGES
     print('languages_gag: ', languages_gag)
 
-    dict_to_insert[f_name] = r_index[f_name][GAG_BASE_LANGUAGE]
+    field_is_dict = isinstance(api_data_index[f_name], dict)
+
+    if field_is_dict:
+        dict_to_insert[f_name] = api_data_index[f_name][GAG_BASE_LANGUAGE]
+    else:
+        dict_to_insert[f_name] = api_data_index[f_name]
 
     for lan in languages_gag:
         translated_column_name = f_name + "_" + lan
-        if lan in r_index[f_name]:
-            dict_to_insert[translated_column_name] = r_index[f_name][lan]
+        if field_is_dict and lan in api_data_index[f_name]:
+            dict_to_insert[translated_column_name] = api_data_index[f_name][lan]
+        elif f_name == "published" and lan == GAG_BASE_LANGUAGE:
+            dict_to_insert[translated_column_name] = True
         elif f_name == "published":
             dict_to_insert[translated_column_name] = False
         else:
