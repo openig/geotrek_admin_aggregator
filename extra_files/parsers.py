@@ -8,10 +8,11 @@ class GeotrekAdminAggregatorParser(Parser):
 
     def parse(self, filename=None, limit=None):
         import importlib
-
         from os.path import join
+
         from django.conf import settings
 
+        # Execute gag_app/agg.py as an imported module
         module_path = join(settings.VAR_DIR, 'conf/gag_app/agg.py')
         spec = importlib.util.spec_from_file_location("agg", module_path)
         module = importlib.util.module_from_spec(spec)

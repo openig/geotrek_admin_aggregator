@@ -1,5 +1,6 @@
 from gag_app.config.config import GAG_BASE_LANGUAGE
 
+# List of potential names for label columns (i.e. textual name of a category)
 list_label_field = [
     'label',
     'name',
@@ -11,6 +12,7 @@ list_label_field = [
     'reservation_system'
 ]
 
+# All fields that are in common between models or have a common handling
 common = {
     "db_column_api_field": {
         "eid": "external_id",
@@ -75,6 +77,8 @@ core_topology = {
     }
 }
 
+# List of data models to import and their specific properties.
+# Order in the dict matters as they are imported in the same order.
 model_to_import = {
     "POI": {
         "db_column_api_field": {},
@@ -83,61 +87,63 @@ model_to_import = {
         },
         "fk_not_mapped": {},
     },
-    "Trek": {
-        "db_column_api_field": {
-            "accessibility_infrastructure": [
-                "disabled_infrastructure",
-                GAG_BASE_LANGUAGE
-            ],
-            "accessibility_infrastructure_en": [
-                "disabled_infrastructure",
-                "en"
-            ],
-            "accessibility_infrastructure_es": [
-                "disabled_infrastructure",
-                "es"
-            ],
-            "accessibility_infrastructure_fr": [
-                "disabled_infrastructure",
-                "fr"
-            ],
-            "accessibility_infrastructure_it": [
-                "disabled_infrastructure",
-                "it"
-            ],
-            "duration": "duration",
-            "eid2": "second_external_id",
-        },
-        "fk_mapped": {
-            "DifficultyLevel": "trek_difficulty",
-            "Practice": "trek_practice",
-            "Route": "trek_route",
-            "TrekNetwork": "trek_network",
-        },
-        "fk_not_mapped": {
-            "Label": "label",
-            "Accessibility": "trek_accessibility",
-            # "Rating": "trek_rating",
-        },
-    },
-    "TouristicContent": {
-        "db_column_api_field": {
-            "contact": "contact",
-            "email": "email",
-            "website": "website",
-            "approved": "approved"
-        },
-        "fk_mapped": {
-            "TouristicContentCategory": "touristiccontent_category",
-            "TouristicContentType1": "touristiccontent_category",
-            "TouristicContentType2": "touristiccontent_category",
-        },
-        "fk_not_mapped": {
-            "LabelAccessibility": "label_accessibility"
-        }
-    },
+    # "Trek": {
+    #     "db_column_api_field": {
+    #         "accessibility_infrastructure": [
+    #             "disabled_infrastructure",
+    #             GAG_BASE_LANGUAGE
+    #         ],
+    #         "accessibility_infrastructure_en": [
+    #             "disabled_infrastructure",
+    #             "en"
+    #         ],
+    #         "accessibility_infrastructure_es": [
+    #             "disabled_infrastructure",
+    #             "es"
+    #         ],
+    #         "accessibility_infrastructure_fr": [
+    #             "disabled_infrastructure",
+    #             "fr"
+    #         ],
+    #         "accessibility_infrastructure_it": [
+    #             "disabled_infrastructure",
+    #             "it"
+    #         ],
+    #         "duration": "duration",
+    #         "eid2": "second_external_id",
+    #     },
+    #     "fk_mapped": {
+    #         "DifficultyLevel": "trek_difficulty",
+    #         "Practice": "trek_practice",
+    #         "Route": "trek_route",
+    #         "TrekNetwork": "trek_network",
+    #     },
+    #     "fk_not_mapped": {
+    #         "Label": "label",
+    #         "Accessibility": "trek_accessibility",
+    #         # "Rating": "trek_rating",
+    #     },
+    # },
+    # "TouristicContent": {
+    #     "db_column_api_field": {
+    #         "contact": "contact",
+    #         "email": "email",
+    #         "website": "website",
+    #         "approved": "approved"
+    #     },
+    #     "fk_mapped": {
+    #         "TouristicContentCategory": "touristiccontent_category",
+    #         "TouristicContentType1": "touristiccontent_category",
+    #         "TouristicContentType2": "touristiccontent_category",
+    #     },
+    #     "fk_not_mapped": {
+    #         "LabelAccessibility": "label_accessibility"
+    #     }
+    # },
 }
 
+# Temporary dictionary which stores categories mapping.
+# Will be replaced by dedicated file created via the GAG webapp.
 source_cat_to_gag_cat = {
     "PNE": {
         "POIType": {
