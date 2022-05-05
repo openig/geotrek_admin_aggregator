@@ -516,11 +516,6 @@ class UpdateAndInsert():
 
             self.many_to_many_fields_build_dict()
 
-            # Save the object in database
-            # (only once script has finished and thus transaction has closed)
-            # print('self.obj_to_insert: ', vars(self.obj_to_insert))
-            #self.obj_to_insert.save()
-
             self.import_attachments()
 
             print("\n{} OBJECT N°{} INSERTED!\n".format(self.model_lowercase.upper(), self.index+1))

@@ -87,59 +87,59 @@ model_to_import = {
         },
         "fk_not_mapped": {},
     },
-    # "Trek": {
-    #     "db_column_api_field": {
-    #         "accessibility_infrastructure": [
-    #             "disabled_infrastructure",
-    #             GAG_BASE_LANGUAGE
-    #         ],
-    #         "accessibility_infrastructure_en": [
-    #             "disabled_infrastructure",
-    #             "en"
-    #         ],
-    #         "accessibility_infrastructure_es": [
-    #             "disabled_infrastructure",
-    #             "es"
-    #         ],
-    #         "accessibility_infrastructure_fr": [
-    #             "disabled_infrastructure",
-    #             "fr"
-    #         ],
-    #         "accessibility_infrastructure_it": [
-    #             "disabled_infrastructure",
-    #             "it"
-    #         ],
-    #         "duration": "duration",
-    #         "eid2": "second_external_id",
-    #     },
-    #     "fk_mapped": {
-    #         "DifficultyLevel": "trek_difficulty",
-    #         "Practice": "trek_practice",
-    #         "Route": "trek_route",
-    #         "TrekNetwork": "trek_network",
-    #     },
-    #     "fk_not_mapped": {
-    #         "Label": "label",
-    #         "Accessibility": "trek_accessibility",
-    #         # "Rating": "trek_rating",
-    #     },
-    # },
-    # "TouristicContent": {
-    #     "db_column_api_field": {
-    #         "contact": "contact",
-    #         "email": "email",
-    #         "website": "website",
-    #         "approved": "approved"
-    #     },
-    #     "fk_mapped": {
-    #         "TouristicContentCategory": "touristiccontent_category",
-    #         "TouristicContentType1": "touristiccontent_category",
-    #         "TouristicContentType2": "touristiccontent_category",
-    #     },
-    #     "fk_not_mapped": {
-    #         "LabelAccessibility": "label_accessibility"
-    #     }
-    # },
+    "Trek": {
+        "db_column_api_field": {
+            "accessibility_infrastructure": [
+                "disabled_infrastructure",
+                GAG_BASE_LANGUAGE
+            ],
+            "accessibility_infrastructure_en": [
+                "disabled_infrastructure",
+                "en"
+            ],
+            "accessibility_infrastructure_es": [
+                "disabled_infrastructure",
+                "es"
+            ],
+            "accessibility_infrastructure_fr": [
+                "disabled_infrastructure",
+                "fr"
+            ],
+            "accessibility_infrastructure_it": [
+                "disabled_infrastructure",
+                "it"
+            ],
+            "duration": "duration",
+            "eid2": "second_external_id",
+        },
+        "fk_mapped": {
+            "DifficultyLevel": "trek_difficulty",
+            "Practice": "trek_practice",
+            "Route": "trek_route",
+            "TrekNetwork": "trek_network",
+        },
+        "fk_not_mapped": {
+            "Label": "label",
+            "Accessibility": "trek_accessibility",
+            # "Rating": "trek_rating",
+        },
+    },
+    "TouristicContent": {
+        "db_column_api_field": {
+            "contact": "contact",
+            "email": "email",
+            "website": "website",
+            "approved": "approved"
+        },
+        "fk_mapped": {
+            "TouristicContentCategory": "touristiccontent_category",
+            "TouristicContentType1": "touristiccontent_category",
+            "TouristicContentType2": "touristiccontent_category",
+        },
+        "fk_not_mapped": {
+            "LabelAccessibility": "label_accessibility"
+        }
+    },
 }
 
 # Temporary dictionary which stores categories mapping.
