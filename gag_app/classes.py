@@ -1,7 +1,7 @@
+import logging
 import os
 import urllib.request
 from mimetypes import guess_type
-from warnings import warn
 
 import requests
 from django.apps import apps
@@ -16,6 +16,8 @@ from gag_app.config.config import (AUTH_USER, AUTHENT_STRUCTURE,
 from gag_app.env import (common, core_topology, list_label_field,
                          model_to_import, source_cat_to_gag_cat)
 from gag_app.utils import geom_to_wkt
+
+log = logging.getLogger()
 
 
 class ParserAPIv2ImportContentTypeModel():
@@ -33,13 +35,13 @@ class ParserAPIv2ImportContentTypeModel():
         self.app_label = ContentType.objects.get(
             model=self.model_lowercase
         ).app_label
-        print('app_label: ', self.app_label)
+        log.debug(f'{self.app_label=}')
 
         self.current_model = apps.get_model(
             app_label=self.app_label,
             model_name=model_to_import_name
         )
-        print('current_model: ', self.current_model)
+        log.debug(f'{self.current_model=}')
 
         # Define request API url
         self.url = api_base_url + self.model_lowercase
@@ -52,9 +54,9 @@ class ParserAPIv2ImportContentTypeModel():
 
         params = {**self.url_params, **additional_params}
 
-        print("Fetching API...")
-        print("url: ", url, "; params: ", params)
+        log.info("Fetching API...")
         response = requests.get(url, params=params)
+        log.info(f'{response.url}')
         response_results = response.json()["results"]
 
         while response.json()["next"] is not None:  # handling of multipage responses
@@ -69,7 +71,7 @@ class ParserAPIv2ImportContentTypeModel():
             additional_params={'fields': 'id,name'},
             api_route='portal'
             )
-        print('portals_response: ', portals_results)
+        log.debug(f'{portals_results=}')
         portal_ids_list = [p['id'] for p in portals_results if p['name'] in PORTALS]
         portal_ids_str = ','.join(str(id) for id in portal_ids_list)
 
@@ -88,7 +90,7 @@ class ParserAPIv2ImportContentTypeModel():
         # Evaluate each object to see if its uuid's missing from API results
         for obj in self.current_model.objects.filter(structure=self.structure).iterator(chunk_size=200):
             if str(obj.uuid) not in uuids_list:
-                print(obj.uuid)
+                log.debug(f'{obj.uuid=}')
                 to_delete_names.append(obj.name)
                 to_delete_ids.append(obj.topo_object_id)
 
@@ -97,11 +99,11 @@ class ParserAPIv2ImportContentTypeModel():
         objs_to_delete.delete()
 
         for tdi, tdn in zip(to_delete_ids, to_delete_names):
-            print('{} n°{} deleted: {}'.format(self.model_to_import_name, tdi, tdn))
+            log.info('{} n°{} deleted: {}'.format(self.model_to_import_name, tdi, tdn))
 
     def get_last_import_datetime(self):
         last_aggregation_datetime = self.current_model.objects.filter(structure=self.structure).latest('date_update').date_update
-        print('last_aggregation_datetime: ', last_aggregation_datetime)
+        log.debug(f'{last_aggregation_datetime=}')
 
         return last_aggregation_datetime.strftime('%Y-%m-%d')
 
@@ -128,11 +130,11 @@ class ParserAPIv2ImportContentTypeModel():
         if len(api_labels) == 1:
             api_label = api_labels[0]
         else:
-            print('API response keys:', fk_results[0].keys())
-            print('api_labels:', api_labels)
+            log.debug(f'API response keys: {fk_results[0].keys()=}')
+            log.debug(f'{api_labels=}')
             raise Exception("len(api_labels) !=1 whereas exactly one column amongst {} should exist in {} API route".format(list_label_field, api_fk_route))
 
-        print('api_label: ', api_label)
+        log.debug(f'{api_label=}')
 
         return api_label
 
@@ -154,7 +156,7 @@ class ParserAPIv2ImportContentTypeModel():
         # All of them are stored in the same dictionary.
         for fk_model_name, api_fk_route in all_fk_fields_to_get.items():
             fk_results = self.query_api(additional_params={"language": GAG_BASE_LANGUAGE}, api_route=api_fk_route)
-            print('fk_results:', fk_results)
+            log.debug(f'{fk_results=}')
 
             if fk_results:
                 fk_api_values[fk_model_name] = {}
@@ -167,7 +169,7 @@ class ParserAPIv2ImportContentTypeModel():
                 fk_api_values[fk_model_name]['data'] = fk_results
                 fk_api_values[fk_model_name]['api_label'] = api_label
 
-        print('fk_api_values: ', fk_api_values)
+        log.debug(f'{fk_api_values=}')
         return fk_api_values
 
     def delete_update_insert_data(self):
@@ -181,14 +183,14 @@ class ParserAPIv2ImportContentTypeModel():
             # Get last import date to only fetch objects updated after it
             self.url_params['updated_after'] = self.get_last_import_datetime() # VRAIMENT BESOIN D'UNE FONCTION ?
         else:
-            print(f'No {self.current_model.__name__} already existing for {self.structure} structure in GAG database, thus no update or delete operations needed, skipping to insertion')
+            log.info(f'No {self.current_model.__name__} already existing for {self.structure} structure in GAG database, thus no update or delete operations needed, skipping to insertion')
 
         # Data insertion
         api_data = self.query_api()
 
         if api_data:
             all_fields = self.current_model._meta.get_fields(include_parents=False)
-            # print('all_fields: ', all_fields)
+            # log.debug(f'{all_fields=}')
 
             fk_api_values = self.get_fk_api_values(all_fields)
 
@@ -230,14 +232,14 @@ class UpdateAndInsert():
         self.one_to_one_fields = [f for f in all_fields if f.one_to_one]
         self.normal_fields = [f for f in all_fields if f.is_relation is False]
 
-        # print('normal_fields: ', self.normal_fields)
+        # log.debug(f'{self.normal_fields=}')
 
     def get_api_field(self, api_data, index, f_name, value):
         # If field is listed in a "db_column_api_field" dict in env.py file,
         # the path given can be a list or a simple string
         # (e.g. "eid": "external_id" or "eid": ["external_id", "value"]).
         # Depending on that, retrieving of value in API results isn't the same.
-        print(f_name)
+        log.debug(f'{f_name=}')
         if type(value[f_name]) is list and value[f_name][1] in api_data[index][value[f_name][0]]:
             self.dict_to_insert[f_name] = api_data[index][value[f_name][0]][value[f_name][1]]
         elif type(value[f_name]) is str:
@@ -246,7 +248,7 @@ class UpdateAndInsert():
     def deserialize_translated_fields(self, api_data, index, f_name):
         # Get all languages activated in GAG DB
         languages_gag = settings.MODELTRANSLATION_LANGUAGES
-        print('languages_gag: ', languages_gag)
+        log.debug(f'{languages_gag=}')
 
         # Is the translated field a dict with keys/values for each language?
         field_is_dict = isinstance(api_data[index][f_name], dict)
@@ -273,11 +275,11 @@ class UpdateAndInsert():
 
     def get_names_api_label_field_and_django_fk_field(self, field):
         # For many to (one or many) relationships, get necessary variables
-        print('field: ', field)
+        log.debug(f'{field=}')
         fk_field_name = field.name
-        print("fk_field_name: ", fk_field_name)
+        log.debug(f'{fk_field_name=}')
         field_related_model_name = field.related_model.__name__
-        print('field_related_model_name: ', field_related_model_name)
+        log.debug(f'{field_related_model_name=}')
         related_model_fields = field.related_model._meta.get_fields()
 
         # Get all the normal fields of the related model
@@ -285,38 +287,36 @@ class UpdateAndInsert():
         # Then we want to retrieve the label field amongst them.
         related_model_normal_fields_names= [f.name for f in related_model_fields if f.is_relation is False]
         related_model_label_field = [name for name in related_model_normal_fields_names if name in list_label_field]
-        print('related_model_label_field: ', related_model_label_field)
+        log.debug(f'{related_model_label_field=}')
 
         # If there's only one field left, we can return the variables
         if len(related_model_label_field) == 1:
             related_model_label_name = related_model_label_field[0]
             return field_related_model_name, related_model_label_name, fk_field_name
         elif field_related_model_name != 'Topology':
-            print('related_model_fields:', self.related_model_fields)
-            print('related_model_label_field:', related_model_label_field)
+            log.debug(f'{self.related_model_fields=}')
+            log.debug(f'{related_model_label_field=}')
             raise Exception("len(related_model_label_field) !=1 whereas exactly one field amongst {} should exist in {} model".format(list_label_field, self.field_related_model_name))
 
     def get_gag_cat_textual_value(self, api_label, id):
         # Changes category values (Practice, POIType...) from API
         # into new values present in GAG database
         fk_to_insert = {}
-        print('id: ', id)
-        print("self.fk_api_values[self.f_related_model_name]['data']: ", self.fk_api_values[self.f_related_model_name]['data'])
+        log.debug(f'{id=}')
+        log.debug(f"{self.fk_api_values[self.f_related_model_name]['data']=}")
         # Retrieve the textual value using id comparison
         old_value = [cat[api_label] for cat in self.fk_api_values[self.f_related_model_name]['data'] if cat['id'] == id]
 
+        log.debug(f'{old_value=}')
         if not old_value:
-            print('old_value: ', old_value)
-            warn('No old_value found')
+            log.warn('No old_value found')
         elif len(old_value) > 1:
-            print('old_value: ', old_value)
             raise Exception('Multiple categories found for given id!')
         elif self.f_related_model_name in self.fk_mapped:
             # If this category is mapped, we retrieve the new_value in source_cat_to_gag_cat dict
             new_value = source_cat_to_gag_cat[AUTHENT_STRUCTURE][self.f_related_model_name][old_value[0]]
 
-            print('old_value: ', old_value)
-            print('new_value: ', new_value)
+            log.debug(f'{new_value=}')
             fk_to_insert[self.related_model_label_name] = new_value
         elif self.f_related_model_name in self.fk_not_mapped:
             # If this category isn't mapped, we just import the same value
@@ -334,7 +334,7 @@ class UpdateAndInsert():
             api_fk_id = self.api_data[self.index]['types'][type2_key]
         else:
             api_fk_id = self.api_data[self.index][self.fk_field_name]
-        print('api_fk_id: ', api_fk_id)
+        log.debug(f'{api_fk_id=}')
 
         if api_fk_id:
             if relationship_type == 'many_to_many':
@@ -343,7 +343,7 @@ class UpdateAndInsert():
                 api_fk_id_list = [api_fk_id]
 
             api_label = self.fk_api_values[self.f_related_model_name]['api_label']
-            print('api_label: ', api_label)
+            log.debug(f'{api_label=}')
 
             # For each id: retrieve the matching GAG category textual value,
             # then the corresponding object in GAG related model,
@@ -351,18 +351,18 @@ class UpdateAndInsert():
             # or directly to obj_to_insert for many to many relationships
             for api_fk_id in api_fk_id_list:
                 gag_textual_value = self.get_gag_cat_textual_value(api_label=api_label, id=api_fk_id)
-                print('gag_textual_value: ', gag_textual_value)
+                log.debug(f'{gag_textual_value=}')
 
                 if self.related_model_label_name in gag_textual_value:
                     if relationship_type == 'many_to_one':
                         self.dict_to_insert[self.fk_field_name] = field.related_model.objects.get(**gag_textual_value)
                     elif relationship_type == 'many_to_many':
                         mtm_obj_to_add = field.related_model.objects.get(**gag_textual_value)
-                        print('mtm_obj_to_add: ', mtm_obj_to_add)
+                        log.debug(f'{mtm_obj_to_add=}')
                         getattr(self.obj_to_insert, field.name).add(mtm_obj_to_add)
 
     def build_topo_dict(self):
-        print(self.model_to_import_name, ': topology exists')
+        log.debug(f'{self.model_to_import_name}: topology exists')
         self.dict_to_insert['kind'] = self.model_to_import_name.upper()
         self.dict_to_insert['geom'] = geom_to_wkt(self.api_data[self.index])
 
@@ -374,21 +374,21 @@ class UpdateAndInsert():
             elif ctf_name in core_topology['default_values']:
                 self.dict_to_insert[ctf_name] = core_topology['default_values'][ctf_name]
 
-        print('self.dict_to_insert: ', self.dict_to_insert)
+        log.debug(f'{self.dict_to_insert=}')
 
     def one_to_one_fields_build_dict(self):
         # Handle every field in a one to one relationship.
         # This function is separate from normal fields' one because we need to create the Topology object before
         # being able to fill fields for a related object as a Trek or a POI.
         for f in self.one_to_one_fields:
-            print(f)
+            log.debug(f'{f=}')
             if f.related_model.__name__ == 'Topology' and self.api_data[self.index]['geometry'] is not None:
                 self.build_topo_dict()
 
     def normal_fields_build_dict(self):
         # Handle every field not in a Django relationship as per its env.py situation
         for f in self.normal_fields:
-            print('f.name: ', f.name)
+            log.debug(f'{f.name=}')
             if f.name in self.api_data[self.index]:
                 if f.name in self.model_to_import_properties['db_column_api_field']:
                     self.get_api_field(self.api_data, self.index, f.name, self.model_to_import_properties['db_column_api_field'])
@@ -411,7 +411,7 @@ class UpdateAndInsert():
             elif self.f_related_model_name in self.fk_api_values:
                 self.query_fk_api_values_dict(relationship_type='many_to_one', field=field)
             else:
-                warn("Related model doesn't conform to any handled possibility.")
+                log.warn(f"Related model {self.f_related_model_name} doesn't conform to any handled possibility.")
 
     def many_to_many_fields_build_dict(self):
         # Handle every field in a many to many Django relationship
@@ -421,7 +421,7 @@ class UpdateAndInsert():
             if self.f_related_model_name in self.fk_api_values:
                 self.query_fk_api_values_dict(relationship_type='many_to_many', field=field)
             else:
-                warn("Related model doesn't conform to any handled possibility.")
+                log.warn(f"Related model {self.f_related_model_name} doesn't conform to any handled possibility.")
 
     def import_attachments(self):
         if 'attachments' in self.api_data[self.index] and len(self.api_data[self.index]['attachments']) > 0:
@@ -434,8 +434,8 @@ class UpdateAndInsert():
                     if db_name in attachment:
                         attachment_dict[db_name] = default_value
 
-                print('self.obj_to_insert.pk: ', self.obj_to_insert.pk)
-                print('self.obj_to_insert: ', vars(self.obj_to_insert))
+                log.debug(f'{self.obj_to_insert.pk=}')
+                log.debug(f'{vars(self.obj_to_insert)=}')
                 attachment_dict['object_id'] = self.obj_to_insert.pk
                 attachment_dict['content_type_id'] = ContentType.objects.get(app_label=self.app_label, model=self.model_lowercase).id
                 attachment_dict['creator_id'] = User.objects.get(username=AUTH_USER).id
@@ -457,18 +457,18 @@ class UpdateAndInsert():
                     attachment_response = requests.get(attachment['url'])
                     if not os.path.isfile(full_filepath):
                         if attachment_response.status_code == 200:
-                            print(f"Downloading {attachment['url']} to {full_filepath}")
+                            log.info(f"Downloading {attachment['url']} to {full_filepath}")
                             urllib.request.urlretrieve(attachment['url'], full_filepath)
                         else:
-                            print("Error {} for {}".format(attachment_response.status_code, attachment['url']))
+                            log.info("Error {} for {}".format(attachment_response.status_code, attachment['url']))
 
                 elif attachment['type'] == 'video':
                     attachment_dict['filetype_id'] = FileType.objects.get(type='Vidéo').id
                     attachment_dict['is_image'] = False
                     attachment_dict['attachment_video'] = attachment['url']
                 else:
-                    print(attachment)
-                    print('mimetype: ', mt)
+                    log.debug(f'{attachment=}')
+                    log.debug(f'{mt=}')
                     attachment_dict['filetype_id'] = FileType.objects.get(type='Autre').id
                     attachment_dict['is_image'] = False
 
@@ -484,7 +484,7 @@ class UpdateAndInsert():
         # Handle OrderedTrekChild model
         children_ids = self.api_data[self.index]['children']
         if children_ids:
-            print('children_ids: ', children_ids)
+            log.debug(f'{children_ids=}')
             # Create an OrderedTrekChild relationship for each id in "children" API field
             for child_id in children_ids:
                 # Retrieve uuid for each child
@@ -498,13 +498,13 @@ class UpdateAndInsert():
                 else:
                     # A trek not published in source DB, so not displayed by API,
                     # is still referenced in "children" API field if its parent is itself published
-                    print(f"{child_id} trek may be not published, therefore isn't in API results")
+                    log.warn(f"{child_id} trek may be not published, therefore isn't in API results")
 
         return signal
 
     def run(self):
         for self.index in range(len(self.api_data)):
-            # print('self.api_data[self.index]: ', self.api_data[self.index])
+            # log.debug(f'{self.api_data[self.index]=}')
             self.dict_to_insert = {}
 
             self.one_to_one_fields_build_dict()
@@ -518,10 +518,10 @@ class UpdateAndInsert():
 
             self.import_attachments()
 
-            print("\n{} OBJECT N°{} INSERTED!\n".format(self.model_lowercase.upper(), self.index+1))
+            log.info("\n{} OBJECT N°{} INSERTED!\n".format(self.model_lowercase.upper(), self.index+1))
 
         if self.model_to_import_name == 'Trek':
             for self.index in range(len(self.api_data)):
                 signal = self.create_treks_relationships()
                 if signal:
-                    print("\nRELATIONSHIPS OF {} OBJECT N°{} CREATED!\n".format(self.model_lowercase.upper(), self.index+1))
+                    log.info("\nRELATIONSHIPS OF {} OBJECT N°{} CREATED!\n".format(self.model_lowercase.upper(), self.index+1))
