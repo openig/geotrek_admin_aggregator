@@ -1,5 +1,6 @@
 from gag_app.config.config import GAG_BASE_LANGUAGE
 
+# List of potential names for label columns (i.e. textual name of a category)
 list_label_field = [
     'label',
     'name',
@@ -11,6 +12,7 @@ list_label_field = [
     'reservation_system'
 ]
 
+# All fields that are in common between models or have a common handling
 common = {
     "db_column_api_field": {
         "eid": "external_id",
@@ -75,6 +77,8 @@ core_topology = {
     }
 }
 
+# List of data models to import and their specific properties.
+# Order in the dict matters as they are imported in the same order.
 model_to_import = {
     "POI": {
         "db_column_api_field": {},
@@ -138,6 +142,8 @@ model_to_import = {
     },
 }
 
+# Temporary dictionary which stores categories mapping.
+# Will be replaced by dedicated file created via the GAG webapp.
 source_cat_to_gag_cat = {
     "PNE": {
         "POIType": {
