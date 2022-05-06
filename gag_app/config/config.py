@@ -1,34 +1,43 @@
-# URL du Geotrek-admin source :
-GADMIN_BASE_URL = 'geotrekdemo.ecrins-parcnational.fr'
+AUTH_USER = 'gadmin48'  # user name to whom media creation will be attributed.
+# for instance an admin account.
 
-# Si nécessaire, nom du (ou des) portail(s) de la base source
-# dont on veut récupérer les données :
-PORTALS = None
+GAG_BASE_LANGUAGE = 'fr'  # main language of GAG database
 
-# Attribution des données à une structure.
-# Doit correspondre à une entrée dans la table "authent_structure".
-# Indispensable pour la tracabilité des données.
-# /!\ Il ne s'agit pas d'un filtre des données importées.
-# Il s'agit uniquement d'attribuer les données importées à une structure
-# dans la base aggregator.
-# Ne dépend donc pas des structures enregistrées dans la BDD source
-AUTHENT_STRUCTURE = 'PNE'
 
-# Nom de l'user auquel sera attribuée la création des médias
-# Par exemple un compte d'administration.
-AUTH_USER = 'gadmin48'
+SOURCES = [
+    {
+        "AUTHENT_STRUCTURE": 'PNE',
+        "GADMIN_BASE_URL": 'geotrekdemo.ecrins-parcnational.fr',
+        "PORTALS": None,
+    },
+    {
+        "AUTHENT_STRUCTURE": 'PNC',
+        "GADMIN_BASE_URL": 'geotrek-admin.cevennes-parcnational.net',
+        "PORTALS": ['DEP_48'],
+    },
+    {
+        "AUTHENT_STRUCTURE": 'Conseil départemental de la Lozère',
+        "GADMIN_BASE_URL": 'admin48.openig.org',
+        "PORTALS": None,
+    },
+    {
+        "AUTHENT_STRUCTURE": 'PNRGCA',
+        "GADMIN_BASE_URL": 'openig-geotrek-pnrgca.ataraxie.fr',
+        "PORTALS": ['Rando Lozère'],
+    },
+]
 
-GAG_BASE_LANGUAGE = 'fr'  # langue par défaut de la base de données aggregator
+## GADMIN_BASE_URL:
+# Source Geotrek-admin's URL
 
-# Exemples :
-# 'geotrek-admin.cevennes-parcnational.net'
-# AUTHENT_STRUCTURE = 'PNC' PORTALS = ['DEP_48']
+## PORTALS :
+# If needed, name of source database's portal(s)
+# from which we want to get data. Can be set to None
 
-# admin48.openig.org
-# AUTHENT_STRUCTURE = 'Conseil départemental de la Lozère' PORTALS = None
-
-# geotrekdemo.ecrins-parcnational.fr
-# AUTHENT_STRUCTURE = 'PNE' PORTALS = None
-
-# openig-geotrek-pnrgca.ataraxie.fr
-# AUTHENT_STRUCTURE = 'PNRGCA' PORTALS = ['Rando Lozère']
+## AUTHENT_STRUCTURE:
+# Used to attribute aggregate data to a specific structure in GAG database.
+# Should match a line in "authent_structure" GAG table.
+# Essential for data traceability.
+# /!\ It's not a filter on imported data!
+# It isn't used to query source API,
+# thus it doesn't rely on source Geotrek-admin's structures.
