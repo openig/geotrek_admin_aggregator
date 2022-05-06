@@ -78,7 +78,7 @@ class ParserAPIv2ImportContentTypeModel():
         portal_ids_list = [p['id']
                            for p in portals_results
                            if p['name'] in PORTALS]
-        portal_ids_str = ','.join(str(id) for id in portal_ids_list)
+        portal_ids_str = ','.join(map(str, portal_ids_list))
 
         return portal_ids_str
 
@@ -102,7 +102,7 @@ class ParserAPIv2ImportContentTypeModel():
                 to_delete_ids.append(obj.topo_object_id)
 
         # Gather all objects whose uuid's missing from API results
-        objs_to_delete = self.current_model.objects.filter(topo_object_id__in=to_delete_ids)
+        objs_to_delete = self.current_model.objects.filter(pk__in=to_delete_ids)
         objs_to_delete.delete()
 
         for tdi, tdn in zip(to_delete_ids, to_delete_names):
