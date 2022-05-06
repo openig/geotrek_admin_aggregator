@@ -6,14 +6,14 @@ GAG_BASE_LANGUAGE = 'fr'  # main language of GAG database
 
 SOURCES = [
     {
-        "AUTHENT_STRUCTURE": 'PNE',
-        "GADMIN_BASE_URL": 'geotrekdemo.ecrins-parcnational.fr',
-        "PORTALS": None,
-    },
-    {
         "AUTHENT_STRUCTURE": 'PNC',
         "GADMIN_BASE_URL": 'geotrek-admin.cevennes-parcnational.net',
         "PORTALS": ['DEP_48'],
+    },
+    {
+        "AUTHENT_STRUCTURE": 'PNE',
+        "GADMIN_BASE_URL": 'geotrekdemo.ecrins-parcnational.fr',
+        "PORTALS": None,
     },
     {
         "AUTHENT_STRUCTURE": 'Conseil départemental de la Lozère',
