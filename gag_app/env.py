@@ -117,6 +117,7 @@ model_to_import = {
             "Practice": "trek_practice",
             "Route": "trek_route",
             "TrekNetwork": "trek_network",
+            "AccessibilityLevel": "trek_accessibility_level",
         },
         "fk_not_mapped": {
             "Label": "label",
@@ -142,8 +143,8 @@ model_to_import = {
     },
 }
 
-# Temporary dictionary which stores categories mapping.
-# Will be replaced by dedicated file created via the GAG webapp.
+# Dictionary which stores categories mapping.
+# (will be replaced by dedicated file created via the GAG mapping webapp)
 source_cat_to_gag_cat = {
     "PNE": {
         "POIType": {

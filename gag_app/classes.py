@@ -22,16 +22,17 @@ log = logging.getLogger()
 class ParserAPIv2ImportContentTypeModel():
     def __init__(self, api_base_url, model_to_import_name,
                  model_to_import_properties, structure,
-                 coretopology_fields, AUTHENT_STRUCTURE):
+                 coretopology_fields, AUTHENT_STRUCTURE,
+                 IMPORT_ATTACHMENTS):
         self.api_base_url = api_base_url
         self.model_to_import_name = model_to_import_name
         self.model_to_import_properties = model_to_import_properties
-        # self.process_data = process_data  # inutile pr l'instant
         self.structure = structure
         self.coretopology_fields = coretopology_fields
         self.url_params = {}
         self.model_lowercase = model_to_import_name.lower()
         self.AUTHENT_STRUCTURE = AUTHENT_STRUCTURE
+        self.IMPORT_ATTACHMENTS = IMPORT_ATTACHMENTS
 
         # Get Django model
         self.app_label = ContentType.objects.get(
@@ -90,7 +91,8 @@ class ParserAPIv2ImportContentTypeModel():
         to_delete_names = []
         to_delete_ids = []
 
-        uuids_results = self.query_api(additional_params={'fields': 'uuid'})
+        uuids_results = self.query_api(
+            additional_params={'fields': 'uuid', 'page_size': '500'})
         uuids_list = [u['uuid'] for u in uuids_results]
 
         # Evaluate each object to see if its uuid's missing from API results
@@ -165,7 +167,8 @@ class ParserAPIv2ImportContentTypeModel():
         fk_not_mapped = {**common["fk_not_mapped"],
                          **model_to_import[self.model_to_import_name]["fk_not_mapped"]}
         self.fk_mapped = {k: v for k, v in fk_mapped.items()
-                          if k in relation_fields_names}
+                          if k in relation_fields_names
+                          and k in source_cat_to_gag_cat[self.AUTHENT_STRUCTURE]}
         self.fk_not_mapped = {k: v for k, v in fk_not_mapped.items()
                               if k in relation_fields_names}
 
@@ -233,8 +236,8 @@ class ParserAPIv2ImportContentTypeModel():
                 all_fields=all_fields,
                 fk_mapped=self.fk_mapped,
                 fk_not_mapped=self.fk_not_mapped,
-                AUTHENT_STRUCTURE=self.AUTHENT_STRUCTURE,
-            ).run()
+                AUTHENT_STRUCTURE=self.AUTHENT_STRUCTURE
+            ).run(IMPORT_ATTACHMENTS=self.IMPORT_ATTACHMENTS)
 
 
 class UpdateAndInsert():
@@ -344,7 +347,7 @@ class UpdateAndInsert():
         category_values = self.fk_api_values[self.f_related_model_name]['data']
 
         log.debug(f'{id=}')
-        log.debug(f"{category_values=}")
+        # log.debug(f"{category_values=}")
         # Retrieve the textual value using id comparison
 
         old_value = [cat[api_label]
@@ -489,6 +492,11 @@ class UpdateAndInsert():
                 self.query_fk_api_values_dict(
                     relationship_type='many_to_many',
                     field=field)
+            elif self.f_related_model_name == 'WebLink':
+                for weblink in self.api_data[self.index]['web_links']:
+                    mtm_obj_to_add = field.related_model.objects.get(url=weblink['url'])
+                    log.debug(f'{mtm_obj_to_add=}')
+                    getattr(self.obj_to_insert, field.name).add(mtm_obj_to_add)
             else:
                 log.warn(f'Related model {self.f_related_model_name} '
                          "doesn't conform to any handled possibility.")
@@ -590,7 +598,7 @@ class UpdateAndInsert():
 
         return signal
 
-    def run(self):
+    def run(self, IMPORT_ATTACHMENTS):
         for self.index in range(len(self.api_data)):
             # log.debug(f'{self.api_data[self.index]=}')
             self.dict_to_insert = {}
@@ -606,7 +614,8 @@ class UpdateAndInsert():
 
             self.many_to_many_fields_build_dict()
 
-            self.import_attachments()
+            if IMPORT_ATTACHMENTS:
+                self.import_attachments()
 
             log.info(f'\n{self.model_lowercase.upper()} OBJECT '
                      f'N°{self.index+1} INSERTED!\n')
