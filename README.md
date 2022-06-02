@@ -64,6 +64,7 @@ Renseigner tous les paramètres pour les adapter à son contexte organisationnel
   - `GADMIN_BASE_URL` : URL du Geotrek-admin source (dans sa version la plus simple, soit l'hôte : sous-domaine.domaine / Ex : "admin48.openig.org")
   - `DATA_TO_IMPORT` : liste des données que l'on souhaite importer depuis cette source. Utilise les noms des modèles Django, listés dans la section précédente de ce document ou disponibles dans la variable `model_to_import` du fichier `gag_app/env.py`. On peut ainsi importer des données différentes selon la source.
   - `PORTALS` : liste des noms des portails de la base de données source dont on souhaite agréger les données. Peut être égal à `None` si on n'en a pas l'utilité.
+  - `IMPORT_ATTACHMENTS` : peut prendre les valeurs `True` ou `False`, permet d'activer ou de désactiver l'import des médias pour cette source de données.
 
 Exemple :
 ``` python
@@ -96,7 +97,7 @@ La structure est la suivante :
 ``` python
 "PNC": { # source de données (cette clef doit correspondre à la valeur de AUTHENT_STRUCTURE renseignée dans config.py)
         "POIType": { # modèle de données (cette clef doit correspondre au nom du modèle Django)
-            "Flore": "Flore",  # catégorie de la source de données (à gauche) à faire correspondre avec une catégorie de l'aggregator (à droite) 
+            "Flore": "Flore",  # catégorie de la source de données (à gauche) à faire correspondre avec une catégorie de l'aggregator (à droite)
             "Faune": "Faune",
             "Géologie": "Géologie",
         },

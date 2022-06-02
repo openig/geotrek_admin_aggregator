@@ -38,6 +38,7 @@ for source in SOURCES:
                 structure=structure,
                 coretopology_fields=coretopology_fields,
                 AUTHENT_STRUCTURE=source['AUTHENT_STRUCTURE'],
+                IMPORT_ATTACHMENTS=source['IMPORT_ATTACHMENTS'],
             )
 
             main_parser.delete_update_insert_data(PORTALS=source['PORTALS'])

@@ -22,7 +22,8 @@ log = logging.getLogger()
 class ParserAPIv2ImportContentTypeModel():
     def __init__(self, api_base_url, model_to_import_name,
                  model_to_import_properties, structure,
-                 coretopology_fields, AUTHENT_STRUCTURE):
+                 coretopology_fields, AUTHENT_STRUCTURE,
+                 IMPORT_ATTACHMENTS):
         self.api_base_url = api_base_url
         self.model_to_import_name = model_to_import_name
         self.model_to_import_properties = model_to_import_properties
@@ -32,6 +33,7 @@ class ParserAPIv2ImportContentTypeModel():
         self.url_params = {}
         self.model_lowercase = model_to_import_name.lower()
         self.AUTHENT_STRUCTURE = AUTHENT_STRUCTURE
+        self.IMPORT_ATTACHMENTS = IMPORT_ATTACHMENTS
 
         # Get Django model
         self.app_label = ContentType.objects.get(
@@ -234,7 +236,7 @@ class ParserAPIv2ImportContentTypeModel():
                 fk_mapped=self.fk_mapped,
                 fk_not_mapped=self.fk_not_mapped,
                 AUTHENT_STRUCTURE=self.AUTHENT_STRUCTURE,
-            ).run()
+            ).run(IMPORT_ATTACHMENTS=self.IMPORT_ATTACHMENTS)
 
 
 class UpdateAndInsert():
@@ -344,7 +346,7 @@ class UpdateAndInsert():
         category_values = self.fk_api_values[self.f_related_model_name]['data']
 
         log.debug(f'{id=}')
-        log.debug(f"{category_values=}")
+        #log.debug(f"{category_values=}")
         # Retrieve the textual value using id comparison
 
         old_value = [cat[api_label]
@@ -474,12 +476,6 @@ class UpdateAndInsert():
                 self.query_fk_api_values_dict(
                     relationship_type='many_to_one',
                     field=field)
-            elif self.f_related_model_name == 'WebLink':
-                log.debug(f'{self.api_data[self.index]['web_links']}')
-                for weblink in self.api_data[self.index]['web_links']:
-                    mtm_obj_to_add = field.related_model.objects.get(url=weblink['url'])
-                    log.debug(f'{mtm_obj_to_add=}')
-                    getattr(self.obj_to_insert, field.name).add(mtm_obj_to_add)
             else:
                 log.warn(f'Related model {self.f_related_model_name} '
                          "doesn't conform to any handled possibility.")
@@ -495,6 +491,11 @@ class UpdateAndInsert():
                 self.query_fk_api_values_dict(
                     relationship_type='many_to_many',
                     field=field)
+            elif self.f_related_model_name == 'WebLink':
+                for weblink in self.api_data[self.index]['web_links']:
+                    mtm_obj_to_add = field.related_model.objects.get(url=weblink['url'])
+                    log.debug(f'{mtm_obj_to_add=}')
+                    getattr(self.obj_to_insert, field.name).add(mtm_obj_to_add)
             else:
                 log.warn(f'Related model {self.f_related_model_name} '
                          "doesn't conform to any handled possibility.")
@@ -596,7 +597,7 @@ class UpdateAndInsert():
 
         return signal
 
-    def run(self):
+    def run(self, IMPORT_ATTACHMENTS):
         for self.index in range(len(self.api_data)):
             # log.debug(f'{self.api_data[self.index]=}')
             self.dict_to_insert = {}
@@ -612,7 +613,8 @@ class UpdateAndInsert():
 
             self.many_to_many_fields_build_dict()
 
-            self.import_attachments()
+            if IMPORT_ATTACHMENTS:
+                self.import_attachments()
 
             log.info(f'\n{self.model_lowercase.upper()} OBJECT '
                      f'N°{self.index+1} INSERTED!\n')
