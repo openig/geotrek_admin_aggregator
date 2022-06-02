@@ -30,11 +30,11 @@ for source in SOURCES:
         log.info(f'API version is: {version}')
 
         # Iterate in env.model_to_import, which sets models processing order
-        for mti_name, mti_properties in model_to_import.items():
+        for mti_name in source['DATA_TO_IMPORT']:
             main_parser = ParserAPIv2ImportContentTypeModel(
                 api_base_url=api_base_url,
                 model_to_import_name=mti_name,
-                model_to_import_properties=mti_properties,
+                model_to_import_properties=model_to_import[mti_name],
                 structure=structure,
                 coretopology_fields=coretopology_fields,
                 AUTHENT_STRUCTURE=source['AUTHENT_STRUCTURE'],

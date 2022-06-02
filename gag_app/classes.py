@@ -474,6 +474,12 @@ class UpdateAndInsert():
                 self.query_fk_api_values_dict(
                     relationship_type='many_to_one',
                     field=field)
+            elif self.f_related_model_name == 'WebLink':
+                log.debug(f'{self.api_data[self.index]['web_links']}')
+                for weblink in self.api_data[self.index]['web_links']:
+                    mtm_obj_to_add = field.related_model.objects.get(url=weblink['url'])
+                    log.debug(f'{mtm_obj_to_add=}')
+                    getattr(self.obj_to_insert, field.name).add(mtm_obj_to_add)
             else:
                 log.warn(f'Related model {self.f_related_model_name} '
                          "doesn't conform to any handled possibility.")
