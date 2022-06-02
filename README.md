@@ -37,6 +37,7 @@ Itinéraires (`trekking_trek` / `Trek`) :
  - catégories liens web (`trekking_weblinkcategory` / `WebLinkCategory`)
  - liens webs (`trekking_weblink` / `Weblink`)
  - réseaux (`trekking_treknetwork` / `TrekNetwork`)
+ - niveaux d'accessibilité (`trekking_accessibilitylevel`, `AccessibilityLevel`)
  - thèmes (`common_theme` / `Theme`)
  - systèmes de réservation (`common_reservationsystem` / `ReservationSystem`)
 
@@ -46,7 +47,19 @@ POI (`trekking_poi` / `POI`) :
 Contenu touristique (`tourism_touristiccontent` / `TouristicContent`):
  - catégories de contenu touristique (`tourism_touristiccontentcategory` / `TouristicContentCategory`) (obligatoire)
  - types de contenu touristique (`tourism_touristiccontenttype1` / `TouristicContentType1`et `tourism_touristiccontenttype2` / `TouristicContentType2`) (obligatoire)
+ - labels accessibilité (`tourism_labelaccessibility`, `LabelAccessibility`)
  - thèmes (`common_theme` / `Theme`)
+
+En plus de cela, la liste de données qui suit doit être renseignée, non pas avec les valeurs souhaitées par la structure gestionnaire de l'aggregator, mais avec les valeurs directement issues des bases de données source. Il faut par exemple importer des bases sources l'ensemble des bureaux d'informations. Nous considérons que ces catégories ne sont pas à faire correspondre avec une nouvelle catégorie définie par l'organisation gestionnaire de l'aggregator, car cela aurait peu de sens de modifier le nom d'un bureau d'information, ou bien d'une source d'un itinéraire.
+
+Itinéraires (`trekking_trek` / `Trek`) :
+ - sources des fiches (`common_recordsource` / `RecordSource`)
+ - lieux de renseignement (`tourism_informationdesk` / `InformationDesk`)
+ - accessibilités (`trekking_accessibility`, `Accessibility`)
+ - étiquettes (`common_label` / `Label`)
+
+Contenu touristique (`tourism_touristiccontent` / `TouristicContent`):
+ - sources des fiches (`common_recordsource` / `RecordSource`)
 
 
 /!\ Cela peut être contre-intuitif, mais il faut bien renseigner manuellement les liens web (`trekking_weblink`) et pas uniquement les catégories de liens web (`trekking_weblinkcategory`). Les noms des liens web peuvent être différents dans la base de données GAG par rapport à la base source (seule catégorie pour laquelle c'est autorisé), afin d'éviter les doublons et de la confusion. La reconnaissance se fait par l'URL du lien, qui doit être identique dans la base de données GAG et dans la base source. Cas d'usage : si deux structures sources ont un lien web nommé "TER SNCF" mais renvoyant chacun vers une page web différente car les deux structures sont dans des régions différentes, il est autorisé de modifier le nom des liens web en "TER SNCF Occitanie" et "TER SNCF Auvergne", tant que les URL ne sont pas modifiées.
