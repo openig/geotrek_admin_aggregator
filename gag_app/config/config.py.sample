@@ -10,24 +10,28 @@ SOURCES = [
         "GADMIN_BASE_URL": 'geotrek-admin.cevennes-parcnational.net',
         "DATA_TO_IMPORT": ['Trek', 'POI'],
         "PORTALS": ['DEP_48'],
+        "IMPORT_ATTACHMENTS": True,
     },
     {
         "AUTHENT_STRUCTURE": 'PNE',
         "GADMIN_BASE_URL": 'geotrekdemo.ecrins-parcnational.fr',
         "DATA_TO_IMPORT": ['Trek', 'POI'],
         "PORTALS": None,
+        "IMPORT_ATTACHMENTS": True,
     },
     {
         "AUTHENT_STRUCTURE": 'Conseil départemental de la Lozère',
         "GADMIN_BASE_URL": 'admin48.openig.org',
         "DATA_TO_IMPORT": ['Trek', 'POI'],
         "PORTALS": None,
+        "IMPORT_ATTACHMENTS": True,
     },
     {
         "AUTHENT_STRUCTURE": 'PNRGCA',
         "GADMIN_BASE_URL": 'openig-geotrek-pnrgca.ataraxie.fr',
         "DATA_TO_IMPORT": ['Trek', 'POI'],
         "PORTALS": ['Rando Lozère'],
+        "IMPORT_ATTACHMENTS": True,
     },
 ]
 
@@ -48,3 +52,7 @@ SOURCES = [
 # PORTALS:
 # If needed, name of source database's portal(s)
 # from which we want to get data. Can be set to None
+
+# IMPORT_ATTACHMENTS:
+# If set to True, all files attached to data models such as Trek or POI
+# will be downloaded and stored in Geotrek settings.MEDIA_ROOT directory
