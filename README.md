@@ -28,6 +28,7 @@ Avant de procéder à une agrégation, la base de données aggregator doit être
 Cette liste présente, pour chaque modèle de données, les catégories gérées par l'aggregator et donc à renseigner dans la base de données GAG avec les valeurs souhaitées par la structure gestionnaire avant la première agrégation. Pour sélectionner les modèles et catégories à importer selon chaque source, voir plus bas dans ce document, section « Configuration/env.py ».
 
 Guide de compréhension de la liste : Nom vulgarisé (nom de la table PostgreSQL / nom du modèle Django)
+
 Les catégories qui doivent obligatoirement être renseignées si l'on souhaite agréger le modèle de données dont elles dépendent sont signalées par une mention spéciale.
 
 Itinéraires (trekking_trek / Trek) :
