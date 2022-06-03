@@ -27,39 +27,39 @@ Avant de procéder à une agrégation, la base de données aggregator doit être
 
 Cette liste présente, pour chaque modèle de données, les catégories gérées par l'aggregator et donc à renseigner dans la base de données GAG avec les valeurs souhaitées par la structure gestionnaire avant la première agrégation. Pour sélectionner les modèles et catégories à importer selon chaque source, voir plus bas dans ce document, section « Configuration/env.py ».
 
-Guide de compréhension de la liste : Nom vulgarisé (`nom de la table PostgreSQL` / `nom du modèle Django`)
+Guide de compréhension de la liste : Nom vulgarisé (nom de la table PostgreSQL / nom du modèle Django)
 Les catégories qui doivent obligatoirement être renseignées si l'on souhaite agréger le modèle de données dont elles dépendent sont signalées par une mention spéciale.
 
-Itinéraires (`trekking_trek` / `Trek`) :
- - difficulté (`trekking_difficultylevel` / `DifficultyLevel`)
- - pratique (`trekking_practice` / `Practice`)
- - parcours (`trekking_route`/ `Route`)
- - catégories liens web (`trekking_weblinkcategory` / `WebLinkCategory`)
- - liens webs (`trekking_weblink` / `Weblink`)
- - réseaux (`trekking_treknetwork` / `TrekNetwork`)
- - niveaux d'accessibilité (`trekking_accessibilitylevel`, `AccessibilityLevel`)
- - thèmes (`common_theme` / `Theme`)
- - systèmes de réservation (`common_reservationsystem` / `ReservationSystem`)
+Itinéraires (trekking_trek / Trek) :
+ - difficulté (trekking_difficultylevel / DifficultyLevel)
+ - pratique (trekking_practice / Practice)
+ - parcours (trekking_route/ Route)
+ - catégories liens web (trekking_weblinkcategory / WebLinkCategory)
+ - réseaux (trekking_treknetwork / TrekNetwork)
+ - niveaux d'accessibilité (trekking_accessibilitylevel, AccessibilityLevel)
+ - thèmes (common_theme / Theme)
+ - systèmes de réservation (common_reservationsystem / ReservationSystem)
 
-POI (`trekking_poi` / `POI`) :
- - types de POI (`trekking_poitype` / `POIType`) (obligatoire)
+POI (trekking_poi / POI) :
+ - types de POI (trekking_poitype / POIType) (obligatoire)
 
-Contenu touristique (`tourism_touristiccontent` / `TouristicContent`):
- - catégories de contenu touristique (`tourism_touristiccontentcategory` / `TouristicContentCategory`) (obligatoire)
- - types de contenu touristique (`tourism_touristiccontenttype1` / `TouristicContentType1`et `tourism_touristiccontenttype2` / `TouristicContentType2`) (obligatoire)
- - labels accessibilité (`tourism_labelaccessibility`, `LabelAccessibility`)
- - thèmes (`common_theme` / `Theme`)
+Contenu touristique (tourism_touristiccontent / TouristicContent):
+ - catégories de contenu touristique (tourism_touristiccontentcategory / TouristicContentCategory) (obligatoire)
+ - types de contenu touristique (tourism_touristiccontenttype1 / TouristicContentType1et tourism_touristiccontenttype2 / TouristicContentType2) (obligatoire)
+ - labels accessibilité (tourism_labelaccessibility, LabelAccessibility)
+ - thèmes (common_theme / Theme)
 
-En plus de cela, la liste de données qui suit doit être renseignée, non pas avec les valeurs souhaitées par la structure gestionnaire de l'aggregator, mais avec les valeurs directement issues des bases de données source. Il faut par exemple importer des bases sources l'ensemble des bureaux d'informations. Nous considérons que ces catégories ne sont pas à faire correspondre avec une nouvelle catégorie définie par l'organisation gestionnaire de l'aggregator, car cela aurait peu de sens de modifier le nom d'un bureau d'information, ou bien d'une source d'un itinéraire.
+En plus de cela, les catégories de données de la liste qui suit doivent être renseignées, non pas avec les valeurs souhaitées par la structure gestionnaire de l'aggregator, mais avec les valeurs directement issues des bases de données source. Il faut par exemple importer des bases sources l'ensemble des bureaux d'informations. Nous considérons que ces catégories ne sont pas à faire correspondre avec une nouvelle catégorie définie par l'organisation gestionnaire de l'aggregator, car cela aurait peu de sens de modifier le nom d'un bureau d'information, ou bien d'une source d'un itinéraire.
 
-Itinéraires (`trekking_trek` / `Trek`) :
- - sources des fiches (`common_recordsource` / `RecordSource`)
- - lieux de renseignement (`tourism_informationdesk` / `InformationDesk`)
- - accessibilités (`trekking_accessibility`, `Accessibility`)
- - étiquettes (`common_label` / `Label`)
+Itinéraires (trekking_trek / Trek) :
+ - sources des fiches (common_recordsource / RecordSource)
+ - étiquettes (common_label / Label)
+ - lieux de renseignement (tourism_informationdesk / InformationDesk)
+ - accessibilités (trekking_accessibility, Accessibility)
+ - liens webs (trekking_weblink / Weblink)
 
-Contenu touristique (`tourism_touristiccontent` / `TouristicContent`):
- - sources des fiches (`common_recordsource` / `RecordSource`)
+Contenu touristique (tourism_touristiccontent / TouristicContent):
+ - sources des fiches (common_recordsource / RecordSource)
 
 
 /!\ Cela peut être contre-intuitif, mais il faut bien renseigner manuellement les liens web (`trekking_weblink`) et pas uniquement les catégories de liens web (`trekking_weblinkcategory`). Les noms des liens web peuvent être différents dans la base de données GAG par rapport à la base source (seule catégorie pour laquelle c'est autorisé), afin d'éviter les doublons et de la confusion. La reconnaissance se fait par l'URL du lien, qui doit être identique dans la base de données GAG et dans la base source. Cas d'usage : si deux structures sources ont un lien web nommé "TER SNCF" mais renvoyant chacun vers une page web différente car les deux structures sont dans des régions différentes, il est autorisé de modifier le nom des liens web en "TER SNCF Occitanie" et "TER SNCF Auvergne", tant que les URL ne sont pas modifiées.
