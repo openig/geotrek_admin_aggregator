@@ -103,21 +103,22 @@ SOURCES = [
 /!\ À terme, n'a pas vocation à être un fichier à configurer manuellement /!\
 
 Pour l'instant, la mise en correspondance des catégories des bases de données source et aggregator se fait via le dictionnaire `source_cat_to_gag_cat`. Chaque type de catégorie de données y est recensée. Pour chaque type de catégorie, l'ensemble des catégories de la base de données source est listée, et il faut associer à chacune d'entre elles la catégorie à laquelle elle correspond dans la base GAG.
-Si on ne souhaite pas agréger un type de catégorie de données (par exemple la difficulté, ou les systèmes de réservation), il suffit de supprimer ce type du dictionnaire. Cela peut être personnalisé source par source. Dans l'exemple suivant, les types de POI et les niveaux de difficulté des itinéraires du PNC seront agrégés, alors que pour le PNRGCA, ce sont les types de POI et les types de parcours qui le seront.
+Si on ne souhaite pas agréger un type de catégorie de données (par exemple les thèmes, ou le type de parcours), il suffit de supprimer ce type du dictionnaire. Cela peut être personnalisé source par source. Dans l'exemple suivant, les types de POI et les thèmes des itinéraires du PNC seront agrégés, alors que pour le PNRGCA, ce sont les types de POI et les types de parcours qui le seront.
+Si une catégorie de données de la base source ne correspond à aucune catégorie dans la base GAG, il faut tout de même renseigner cette catégorie source, et lui associer la valeur `None` du côté GAG. La donnée (itinéraire, contenu touristique...) liée sera quand même importée, mais aura par exemple un thème en moins par rapport à la base de données source, ou un niveau de difficulté vide. Bien sûr, cela ne peut fonctionner pour les types de catégorie dont la présence est requise par Geotrek-admin (`POIType` pour les POI, `TouristicContentType` pour les contenus touristiques, etc.)
 
 La structure est la suivante :
 
 ``` python
 "PNC": { # source de données (cette clef doit correspondre à la valeur de AUTHENT_STRUCTURE renseignée dans config.py)
         "POIType": { # modèle de données (cette clef doit correspondre au nom du modèle Django)
-            "Flore": "Flore",  # catégorie de la source de données (à gauche) à faire correspondre avec une catégorie de l'aggregator (à droite)
-            "Faune": "Faune",
+            "Flore": "Flore et faune",  # catégorie de la source de données (à gauche) à faire correspondre avec une catégorie de l'aggregator (à droite)
+            "Faune": "Flore et faune",
             "Géologie": "Géologie",
         },
-        "DifficultyLevel": {
-            "Très facile": "Très facile",
-            "Facile": "Facile",
-        },
+        "Theme": {
+            "Histoire et culture": "Histoire",
+            "Causses et Cévennes / UNESCO": None, # Catégorie à laquelle ne correspond aucune catégorie du GAG.
+        }
 },
 "PNRGCA": { # deuxième source de données, même fonctionnement
         "POIType": { # les modèles de données à faire correspondre doivent être les mêmes pour chaque source de données

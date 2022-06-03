@@ -403,7 +403,8 @@ class UpdateAndInsert():
                     id=api_fk_id)
                 log.debug(f'{gag_textual_value=}')
 
-                if self.related_model_label_name in gag_textual_value:
+                if gag_textual_value[self.related_model_label_name]:
+                    # If category is mapped and not None:
                     if relationship_type == 'many_to_one':
                         self.dict_to_insert[self.fk_field_name] = field.related_model.objects.get(**gag_textual_value)
                     elif relationship_type == 'many_to_many':
