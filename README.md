@@ -31,7 +31,7 @@ Guide de compréhension de la liste : Nom vulgarisé (nom de la table PostgreSQL
 
 Les catégories qui doivent obligatoirement être renseignées si l'on souhaite agréger le modèle de données dont elles dépendent sont signalées par une mention spéciale.
 
-Itinéraires (trekking_trek / Trek) :
+#### Itinéraires (trekking_trek / Trek) :
  - difficulté (trekking_difficultylevel / DifficultyLevel)
  - pratique (trekking_practice / Practice)
  - parcours (trekking_route/ Route)
@@ -41,10 +41,10 @@ Itinéraires (trekking_trek / Trek) :
  - thèmes (common_theme / Theme)
  - systèmes de réservation (common_reservationsystem / ReservationSystem)
 
-POI (trekking_poi / POI) :
+#### POI (trekking_poi / POI) :
  - types de POI (trekking_poitype / POIType) (obligatoire)
 
-Contenu touristique (tourism_touristiccontent / TouristicContent):
+#### Contenu touristique (tourism_touristiccontent / TouristicContent):
  - catégories de contenu touristique (tourism_touristiccontentcategory / TouristicContentCategory) (obligatoire)
  - types de contenu touristique (tourism_touristiccontenttype1 / TouristicContentType1et tourism_touristiccontenttype2 / TouristicContentType2) (obligatoire)
  - labels accessibilité (tourism_labelaccessibility, LabelAccessibility)
@@ -52,14 +52,14 @@ Contenu touristique (tourism_touristiccontent / TouristicContent):
 
 En plus de cela, les catégories de données de la liste qui suit doivent être renseignées, non pas avec les valeurs souhaitées par la structure gestionnaire de l'aggregator, mais avec les valeurs directement issues des bases de données source. Il faut par exemple importer des bases sources l'ensemble des bureaux d'informations. Nous considérons que ces catégories ne sont pas à faire correspondre avec une nouvelle catégorie définie par l'organisation gestionnaire de l'aggregator, car cela aurait peu de sens de modifier le nom d'un bureau d'information, ou bien d'une source d'un itinéraire.
 
-Itinéraires (trekking_trek / Trek) :
+#### Itinéraires (trekking_trek / Trek) :
  - sources des fiches (common_recordsource / RecordSource)
  - étiquettes (common_label / Label)
  - lieux de renseignement (tourism_informationdesk / InformationDesk)
  - accessibilités (trekking_accessibility, Accessibility)
  - liens webs (trekking_weblink / Weblink)
 
-Contenu touristique (tourism_touristiccontent / TouristicContent):
+#### Contenu touristique (tourism_touristiccontent / TouristicContent):
  - sources des fiches (common_recordsource / RecordSource)
 
 
