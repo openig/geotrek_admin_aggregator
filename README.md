@@ -143,7 +143,7 @@ Copier le dossier `gag_app` à l'emplacement suivant : `/opt/geotrek-admin/var/c
 
 Copier la ligne suivante en haut du fichier `geotrek-admin/var/conf/parsers.py` :
 ``` python
-    from export_schema.custom_parser import SerializerSchemaItinerairesRando
+    from gag_app.custom_parser import SerializerSchemaItinerairesRando
 ```
 
 Dans un terminal, lancer la commande `geotrek import GeotrekAdminAggregatorParser` (le mode sudo sera sûrement nécessaire).
