@@ -74,11 +74,11 @@ Renseigner tous les paramètres pour les adapter à son contexte organisationnel
  - `AUTH_USER` : nom du compte utilisateur auquel sera attribuée la création des médias. Ce nom doit déjà exister dans la base, il n'est pas créé par le GAG.
  - `GAG_BASE_LANGUAGE` : langue par défaut de la base de données GAG (sous forme de code : fr, en, de...)
  - `SOURCES` : liste des sources de données à agréger. Chaque élément de la liste est un dictionnaire Python décrivant les paramètres de chaque source grâce aux clefs suivantes :
-  - `AUTHENT_STRUCTURE` : nom de la structure à laquelle seront attribuées les données importées. Ce nom doit déjà exister dans la base, il n'est pas créé par le GAG.
-  - `GADMIN_BASE_URL` : URL du Geotrek-admin source (dans sa version la plus simple, soit l'hôte : sous-domaine.domaine / Ex : "admin48.openig.org")
-  - `DATA_TO_IMPORT` : liste des données que l'on souhaite importer depuis cette source. Utilise les noms des modèles Django, listés dans la section précédente de ce document ou disponibles dans la variable `model_to_import` du fichier `gag_app/env.py`. On peut ainsi importer des données différentes selon la source.
-  - `PORTALS` : liste des noms des portails de la base de données source dont on souhaite agréger les données. Peut être égal à `None` si on n'en a pas l'utilité.
-  - `IMPORT_ATTACHMENTS` : peut prendre les valeurs `True` ou `False`, permet d'activer ou de désactiver l'import des médias pour cette source de données.
+   - `AUTHENT_STRUCTURE` : nom de la structure à laquelle seront attribuées les données importées. Ce nom doit déjà exister dans la base, il n'est pas créé par le GAG.
+   - `GADMIN_BASE_URL` : URL du Geotrek-admin source (dans sa version la plus simple, soit l'hôte : sous-domaine.domaine / Ex : "admin48.openig.org")
+   - `DATA_TO_IMPORT` : liste des données que l'on souhaite importer depuis cette source. Utilise les noms des modèles Django, listés dans la section précédente de ce document ou disponibles dans la variable `model_to_import` du fichier `gag_app/env.py`. On peut ainsi importer des données différentes selon la source.
+   - `PORTALS` : liste des noms des portails de la base de données source dont on souhaite agréger les données. Peut être égal à `None` si on n'en a pas l'utilité.
+   - `IMPORT_ATTACHMENTS` : peut prendre les valeurs `True` ou `False`, permet d'activer ou de désactiver l'import des médias pour cette source de données.
 
 Exemple :
 ``` python
@@ -90,12 +90,14 @@ SOURCES = [
         "GADMIN_BASE_URL": 'geotrek-admin.cevennes-parcnational.net',
         "DATA_TO_IMPORT": ['Trek', 'POI', 'TouristicContent'],
         "PORTALS": ['DEP_48'],
+        "IMPORT_ATTACHMENTS": True,
     },
     {
         "AUTHENT_STRUCTURE": 'Conseil départemental de la Lozère',
         "GADMIN_BASE_URL": 'admin48.openig.org',
         "DATA_TO_IMPORT": ['Trek', 'POI'],
         "PORTALS": None,
+        "IMPORT_ATTACHMENTS": True,
     },
 ]
 ```
