@@ -148,7 +148,7 @@ Copier la ligne suivante en haut du fichier `geotrek-admin/var/conf/parsers.py` 
     from gag_app.custom_parser import GeotrekAdminAggregatorParser
 ```
 
-Dans un terminal, lancer la commande `geotrek import GeotrekAdminAggregatorParser` (le mode sudo sera sûrement nécessaire).
+Dans un terminal, se placer dans le dossier `/opt/geotrek-admin/var/conf` et lancer la commande `geotrek import GeotrekAdminAggregatorParser` (le mode sudo sera sûrement nécessaire).
 
 Exemple de tâche cron automatisant l'agrégation :
 `0 3 * * * root /usr/sbin/geotrek import GeotrekAdminAggregatorParser`
