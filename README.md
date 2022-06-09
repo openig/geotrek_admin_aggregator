@@ -150,6 +150,9 @@ Copier la ligne suivante en haut du fichier `geotrek-admin/var/conf/parsers.py` 
 
 Dans un terminal, lancer la commande `geotrek import GeotrekAdminAggregatorParser` (le mode sudo sera sûrement nécessaire).
 
+Exemple de tâche cron automatisant l'agrégation :
+`0 3 * * * root /usr/sbin/geotrek import GeotrekAdminAggregatorParser`
+
 ## Fonctionnement
 
 Le fichier `env.py` fait office d'instructions de traitement des champs issus de l'API pour l'application. Selon la présence d'un champ dans la variable `common` ou bien dans les dictionnaires `fk_mapped`, `fk_not_mapped` ou `db_column_api_field` de la variable `model_to_import`, il ne sera pas traité de la même manière.
