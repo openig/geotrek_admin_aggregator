@@ -1,0 +1,81 @@
+# Dictionary which stores categories mapping.
+# (will be replaced by dedicated file created via the GAG mapping webapp)
+source_cat_to_gag_cat = {
+    "Conseil départemental de la Lozère": {
+        "POIType": {
+            "Faune et Flore": "Flore",
+            "Eau et géologie": "Géologie",
+            "Architecture": "Architecture",
+            "Forêts": "Milieu naturel",
+            "Agriculture et élevage": "Pastoralisme",
+            "Histoire et culture": "Histoire",
+            "Cols et Sommets": "Paysage",
+            "Accessibilité handicap": "Savoir-faire"
+        },
+        "DifficultyLevel": {
+            "Très facile": "Très facile",
+            "Facile": "Facile",
+            "Intermédiaire": "Moyen",
+            "Difficile": "Difficile",
+            "Très difficile": "Très difficile",
+        },
+        "Route": {
+            "Boucle": "Boucle",
+            "Aller-retour": "Aller-retour",
+            "Traversée": "Itinérance",
+        },
+        "Practice": {
+            "VTT": "VTT",
+            "Cyclo route": "VTT",
+            "Pédestre": "Rando à pied",
+            "Raquettes": "Rando à pied",
+            "Cheval": "A cheval",
+        },
+        "ReservationSystem": {
+            "OpenSystem": "OpenSystem",
+            "Gites de France": "Gîtes de France"
+        },
+        "Theme": {
+            "Flore": "Faune et flore",
+            "Faune": "Faune et flore",
+            "Géologie": "Eau et géologie",
+            "Architecture": "Architecture et village",
+            "Refuge": "Architecture et village",
+            "Archéologie et histoire": "Histoire et culture",
+            "Pastoralisme": "Agriculture et élevage",
+            "Lac et glacier": "Forêt",
+        },
+        "TrekNetwork": {
+            "PR": "Picto PR jaune",
+            "GRP": "GRP®",
+            "VTT": "VTT",
+            "Piste équestre": "Équestre",
+            "GR": "GR®",
+        },
+        "TouristicContentCategory": {
+            "Produits du terroir": "Produits du terroir",
+            "Hébergements": "Hébergements",
+            "Restaurants": "Restaurants",
+            "Sites de visites": "Sites de visites",
+            "Sorties accompagnées": "Sorties accompagnées",
+            "Activités de pleine nature": "Activités de pleine nature",
+            "Visites": "Visites",
+            "Séjours écotourisme": "Séjours écotourisme",
+        },
+        "TouristicContentType1": {
+            "Hébergement insolite": "Hébergement insolite",
+            "Ferme auberge": "Ferme auberge",
+            "Artisanat": "Artisanat",
+            "Alimentaire": "Alimentaire",
+            "Autres": "Autres",
+            "Cosmétique": "Cosmétique",
+        },
+        "TouristicContentType2": {
+            "Hébergement insolite": "Hébergement insolite",
+            "Ferme auberge": "Ferme auberge",
+            "Artisanat": "Artisanat",
+            "Alimentaire": "Alimentaire",
+            "Autres": "Autres",
+        },
+    },
+}
