@@ -51,6 +51,9 @@ Les catégories qui doivent obligatoirement être renseignées si l'on souhaite 
  - thèmes (common_theme / Theme)
 
 En plus de cela, les catégories de données de la liste qui suit doivent être renseignées, non pas avec les valeurs souhaitées par la structure gestionnaire de l'aggregator, mais avec les valeurs directement issues des bases de données source. Il faut par exemple importer des bases sources l'ensemble des bureaux d'informations. Nous considérons que ces catégories ne sont pas à faire correspondre avec une nouvelle catégorie définie par l'organisation gestionnaire de l'aggregator, car cela aurait peu de sens de modifier le nom d'un bureau d'information, ou bien d'une source d'un itinéraire.
+Pour ces catégories, la correspondance se fait donc automatiquement grâce à leur nom/label. Aucune mise en correspondance manuelle n'est possible. Pour éviter les potentiels doublons que ce fonctionnement peut engendrer, la correspondance est insensible à la casse.
+Exemple : la source "Fédération française de randonnée pédestre" existe dans la base de données A, alors que la source "Fédération Française de Randonnée Pédestre" existe dans la base de données B. Pour éviter d'avoir à renseigner ces deux sources et leurs orthographes différentes malgré le fait qu'elles représentent la même entité, ces deux catégories pourront être associées à la catégorie de la base GAG "Fédération Française de Randonnée Pédestre", de manière indifférente au placement des majuscules et minuscules.
+/!\ Il reste impossible de faire correspondre "FFRP" à "Fédération Française de Randonnée Pédestre"
 
 #### Itinéraires (trekking_trek / Trek) :
  - sources des fiches (common_recordsource / RecordSource)

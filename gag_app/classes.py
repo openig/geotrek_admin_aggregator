@@ -408,6 +408,7 @@ class UpdateAndInsert():
                     if relationship_type == 'many_to_one':
                         self.dict_to_insert[self.fk_field_name] = field.related_model.objects.get(**gag_textual_value)
                     elif relationship_type == 'many_to_many':
+                        gag_textual_value[self.related_model_label_name + '__iexact'] = gag_textual_value.pop(self.related_model_label_name)
                         mtm_obj_to_add = field.related_model.objects.get(**gag_textual_value)
                         log.debug(f'{mtm_obj_to_add=}')
                         getattr(self.obj_to_insert, field.name).add(mtm_obj_to_add)
