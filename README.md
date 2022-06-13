@@ -20,6 +20,7 @@ Les modèles de données compatibles avec l'aggregator sont : `Trek`, `POI`, `To
 Avant de procéder à une agrégation, la base de données aggregator doit être préparée :
  - désactivation de la segmentation dynamique : ajout de la ligne `TREKKING_TOPOLOGY_ENABLED = False` au fichier `/opt/geotrek-admin/var/conf/custom.py`.
  - ajout d'un compte utilisateur auquel sera attribuée la création des médias, par exemple un compte administrateur. Son nom sera utilisé par le paramètre `AUTH_USER` du fichier de configuration du GAG.
+ - ajout du type de fichier `Autre` (via l'interface d'administration de Django par exemple) qui sera attribué aux fichiers attachés dont le type n'est pas reconnu.
  - ajout d'une structure `authent_structure` par source de données pour l'agrégation. Le nom de ces structures sera utilisé par le paramètre `AUTHENT_STRUCTURE` de chaque source du paramètre `SOURCES` du fichier de configuration du GAG.
  - renseignement de toutes les catégories de données nécessaires avec les valeurs souhaitées. Liste ci-dessous.
 
