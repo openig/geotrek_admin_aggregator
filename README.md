@@ -20,6 +20,7 @@ Les modèles de données compatibles avec l'aggregator sont : `Trek`, `POI`, `To
 Avant de procéder à une agrégation, la base de données aggregator doit être préparée :
  - désactivation de la segmentation dynamique : ajout de la ligne `TREKKING_TOPOLOGY_ENABLED = False` au fichier `/opt/geotrek-admin/var/conf/custom.py`.
  - ajout d'un compte utilisateur auquel sera attribuée la création des médias, par exemple un compte administrateur. Son nom sera utilisé par le paramètre `AUTH_USER` du fichier de configuration du GAG.
+ - ajout du type de fichier `Autre` (via l'interface d'administration de Django par exemple) qui sera attribué aux fichiers attachés dont le type n'est pas reconnu.
  - ajout d'une structure `authent_structure` par source de données pour l'agrégation. Le nom de ces structures sera utilisé par le paramètre `AUTHENT_STRUCTURE` de chaque source du paramètre `SOURCES` du fichier de configuration du GAG.
  - renseignement de toutes les catégories de données nécessaires avec les valeurs souhaitées. Liste ci-dessous.
 
@@ -51,6 +52,9 @@ Les catégories qui doivent obligatoirement être renseignées si l'on souhaite 
  - thèmes (common_theme / Theme)
 
 En plus de cela, les catégories de données de la liste qui suit doivent être renseignées, non pas avec les valeurs souhaitées par la structure gestionnaire de l'aggregator, mais avec les valeurs directement issues des bases de données source. Il faut par exemple importer des bases sources l'ensemble des bureaux d'informations. Nous considérons que ces catégories ne sont pas à faire correspondre avec une nouvelle catégorie définie par l'organisation gestionnaire de l'aggregator, car cela aurait peu de sens de modifier le nom d'un bureau d'information, ou bien d'une source d'un itinéraire.
+Pour ces catégories, la correspondance se fait donc automatiquement grâce à leur nom/label. Aucune mise en correspondance manuelle n'est possible. Pour éviter les potentiels doublons que ce fonctionnement peut engendrer, la correspondance est insensible à la casse.
+Exemple : la source "Fédération française de randonnée pédestre" existe dans la base de données A, alors que la source "Fédération Française de Randonnée Pédestre" existe dans la base de données B. Pour éviter d'avoir à renseigner ces deux sources et leurs orthographes différentes malgré le fait qu'elles représentent la même entité, ces deux catégories pourront être associées à la catégorie de la base GAG "Fédération Française de Randonnée Pédestre", de manière indifférente au placement des majuscules et minuscules.
+/!\ Il reste impossible de faire correspondre "FFRP" à "Fédération Française de Randonnée Pédestre"
 
 #### Itinéraires (trekking_trek / Trek) :
  - sources des fiches (common_recordsource / RecordSource)
@@ -102,7 +106,7 @@ SOURCES = [
 ]
 ```
 
-### Fichier `gag_app/env.py`
+### Fichier `gag_app/category_mapping.py`
 /!\ À terme, n'a pas vocation à être un fichier à configurer manuellement /!\
 
 Pour l'instant, la mise en correspondance des catégories des bases de données source et aggregator se fait via le dictionnaire `source_cat_to_gag_cat`. Chaque type de catégorie de données y est recensée. Pour chaque type de catégorie, l'ensemble des catégories de la base de données source est listée, et il faut associer à chacune d'entre elles la catégorie à laquelle elle correspond dans la base GAG.
@@ -137,6 +141,8 @@ La structure est la suivante :
 # etc.
 ```
 
+### Fichier `gag_app/env.py`
+Ce fichier détermine le comportement à avoir pour chaque champ de chaque modèle de données. Ce sont des comportements génériques qui ne sont pas à personnaliser.
 
 ## Utilisation
 /!\ Prototype en développement /!\

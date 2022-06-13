@@ -13,7 +13,8 @@ from geotrek.trekking.models import OrderedTrekChild, Trek
 
 from gag_app.config.config import AUTH_USER, GAG_BASE_LANGUAGE
 from gag_app.env import (common, core_topology, list_label_field,
-                         model_to_import, source_cat_to_gag_cat)
+                         model_to_import)
+from gag_app.category_mapping import source_cat_to_gag_cat
 from gag_app.utils import geom_to_wkt
 
 log = logging.getLogger()
@@ -361,7 +362,7 @@ class UpdateAndInsert():
             raise Exception('Multiple categories found for given id!')
         elif self.f_related_model_name in self.fk_mapped:
             # If this category is mapped
-            # we retrieve the new_value in env.source_cat_to_gag_cat
+            # we retrieve the new_value in category_mapping.source_cat_to_gag_cat
             new_value = source_cat_to_gag_cat[self.AUTHENT_STRUCTURE][self.f_related_model_name][old_value[0]]
 
             log.debug(f'{new_value=}')
@@ -408,6 +409,7 @@ class UpdateAndInsert():
                     if relationship_type == 'many_to_one':
                         self.dict_to_insert[self.fk_field_name] = field.related_model.objects.get(**gag_textual_value)
                     elif relationship_type == 'many_to_many':
+                        gag_textual_value[self.related_model_label_name + '__iexact'] = gag_textual_value.pop(self.related_model_label_name)
                         mtm_obj_to_add = field.related_model.objects.get(**gag_textual_value)
                         log.debug(f'{mtm_obj_to_add=}')
                         getattr(self.obj_to_insert, field.name).add(mtm_obj_to_add)
