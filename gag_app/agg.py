@@ -1,4 +1,5 @@
 import logging
+import sys
 from time import perf_counter
 
 import requests
@@ -11,14 +12,16 @@ from gag_app.config.config import SOURCES
 from gag_app.env import model_to_import
 
 log = logging.getLogger()
-console = logging.StreamHandler()
+console = logging.StreamHandler(sys.stdout)
 log.addHandler(console)
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 
 
 for source in SOURCES:
     try:
         tic = perf_counter()
+
+        log.info(f"Beginning aggregation of {source['AUTHENT_STRUCTURE']} data!")
 
         # Encapsulate script in transaction to avoid import of partial data
         with transaction.atomic():
@@ -26,7 +29,7 @@ for source in SOURCES:
             structure = Structure.objects.get(name=source['AUTHENT_STRUCTURE'])
             api_base_url = f"https://{source['GADMIN_BASE_URL']}/api/v2/"
 
-            log.info("Checking API version...")
+            log.info(f"Checking API version...")
             version = requests.get(api_base_url + 'version').json()['version']
             log.info(f'API version is: {version}')
 
@@ -46,5 +49,7 @@ for source in SOURCES:
 
         toc = perf_counter()
         log.info(f'Performed aggregation in {toc - tic:.0f} seconds')
-    except:
-        log.error(f'{source} aggregation was stopped because an exception occurred.')
+    except Exception as err:
+        log.error(f'\n{source["AUTHENT_STRUCTURE"]} aggregation was stopped'
+                  ' because an exception occurred:')
+        log.exception(err)

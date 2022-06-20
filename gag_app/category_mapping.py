@@ -99,7 +99,7 @@ source_cat_to_gag_cat = {
             "FFCAM": "FFCAM",
         },
         "Theme": {
-            "Faune et flore": None,
+            "Faune et flore": "TRUC QUI VA CREER UNE ERREUR",
             "Histoire et culture": None,
             "Eau et géologie": None,
             "Forêt": None,

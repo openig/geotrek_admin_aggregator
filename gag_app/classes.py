@@ -481,8 +481,9 @@ class UpdateAndInsert():
                     relationship_type='many_to_one',
                     field=field)
             else:
-                log.warn(f'Related model {self.f_related_model_name} '
-                         "doesn't conform to any handled possibility.")
+                log.warn(f'Foreign key field {self.fk_field_name} and its'
+                         f' related model {self.f_related_model_name}'
+                         " don't conform to any handled possibility.")
 
     def many_to_many_fields_build_dict(self):
         # Handle every field in a many to many Django relationship
@@ -501,8 +502,9 @@ class UpdateAndInsert():
                     log.debug(f'{mtm_obj_to_add=}')
                     getattr(self.obj_to_insert, field.name).add(mtm_obj_to_add)
             else:
-                log.warn(f'Related model {self.f_related_model_name} '
-                         "doesn't conform to any handled possibility.")
+                log.warn(f'Foreign key field {self.fk_field_name} and its'
+                         f' related model {self.f_related_model_name}'
+                         " don't conform to any handled possibility.")
 
     def import_attachments(self):
         if ('attachments' in self.api_data[self.index]
