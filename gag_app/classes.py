@@ -17,7 +17,7 @@ from gag_app.env import (common, core_topology, list_label_field,
 from gag_app.category_mapping import source_cat_to_gag_cat
 from gag_app.utils import geom_to_wkt
 
-log = logging.getLogger()
+log = logging.getLogger("agg")
 
 
 class ParserAPIv2ImportContentTypeModel():
