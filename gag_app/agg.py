@@ -11,13 +11,12 @@ from gag_app.classes import ParserAPIv2ImportContentTypeModel
 from gag_app.config.config import SOURCES
 from gag_app.env import model_to_import
 
-
-log = logging.getLogger(__name__)
+log = logging.getLogger()
 console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.DEBUG)
 c_format = logging.Formatter('%(message)s')
 console_handler.setFormatter(c_format)
 log.addHandler(console_handler)
+log.setLevel(logging.DEBUG)
 
 
 for source in SOURCES:
