@@ -18,7 +18,11 @@ from gag_app.category_mapping import source_cat_to_gag_cat
 from gag_app.utils import geom_to_wkt
 
 log = logging.getLogger("agg")
-
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+c_format = logging.Formatter('%(message)s')
+console_handler.setFormatter(c_format)
+log.addHandler(console_handler)
 
 class ParserAPIv2ImportContentTypeModel():
     def __init__(self, api_base_url, model_to_import_name,
