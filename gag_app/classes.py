@@ -19,7 +19,6 @@ from gag_app.utils import geom_to_wkt
 
 log = logging.getLogger()
 
-
 class ParserAPIv2ImportContentTypeModel():
     def __init__(self, api_base_url, model_to_import_name,
                  model_to_import_properties, structure,
@@ -283,7 +282,7 @@ class UpdateAndInsert():
     def deserialize_translated_fields(self, api_data_i, f_name):
         # Get all languages activated in GAG DB
         languages_gag = settings.MODELTRANSLATION_LANGUAGES
-        log.debug(f'{languages_gag=}')
+        # log.debug(f'{languages_gag=}')
 
         # Is the translated field a dict with keys/values for each language?
         field_is_dict = isinstance(api_data_i[f_name], dict)
@@ -444,7 +443,7 @@ class UpdateAndInsert():
         # Handle every field not in a Django relationship
         # as per its env.py situation
         for f in self.normal_fields:
-            log.debug(f'{f.name=}')
+            # log.debug(f'{f.name=}')
             if f.name in self.api_data[self.index]:
                 if f.name in self.model_to_import_properties['db_column_api_field']:
                     self.get_api_field(
