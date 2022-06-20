@@ -147,7 +147,17 @@ Ce fichier détermine le comportement à avoir pour chaque champ de chaque modè
 ## Utilisation
 /!\ Prototype en développement /!\
 
-Copier le dossier `gag_app` à l'emplacement suivant : `/opt/geotrek-admin/var/conf/`
+Cloner le dépôt GitHub sur le serveur où est installé Geotrek-admin :
+
+```
+git clone git@github.com:openig/geotrek_admin_aggregator.git
+```
+
+Créer un lien symbolique du dossier `gag_app` à l'emplacement suivant : `/opt/geotrek-admin/var/conf/`, par exemple grâce à la commande suivante, à exécuter en tant qu'utilisateur `geotrek` et pas `root` :
+
+``` bash
+sudo ln -s {MY_PATH}/geotrek_admin_aggregator/gag_app /opt/geotrek-admin/var/conf/
+```
 
 Copier la ligne suivante en haut du fichier `geotrek-admin/var/conf/parsers.py` :
 ``` python
