@@ -418,7 +418,6 @@ class UpdateAndInsert():
                             mtm_obj_to_add = field.related_model.objects.get(**gag_textual_value)
                         except ObjectDoesNotExist:
                             log.info(f'{gag_textual_value=}')
-                            log.info(f'{mtm_obj_to_add=}')
                             raise
                         log.debug(f'{mtm_obj_to_add=}')
                         getattr(self.obj_to_insert, field.name).add(mtm_obj_to_add)
