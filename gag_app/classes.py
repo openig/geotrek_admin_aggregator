@@ -6,6 +6,7 @@ from mimetypes import guess_type
 import requests
 from django.apps import apps
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.contenttypes.models import ContentType
 from geotrek.authent.models import User
 from geotrek.common.models import Attachment, FileType
@@ -406,10 +407,18 @@ class UpdateAndInsert():
                 if gag_textual_value[self.related_model_label_name]:
                     # If category is mapped and not None:
                     if relationship_type == 'many_to_one':
-                        self.dict_to_insert[self.fk_field_name] = field.related_model.objects.get(**gag_textual_value)
+                        try:
+                            self.dict_to_insert[self.fk_field_name] = field.related_model.objects.get(**gag_textual_value)
+                        except ObjectDoesNotExist:
+                            log.info(f'\nERROR: {gag_textual_value=}')
+                            raise
                     elif relationship_type == 'many_to_many':
                         gag_textual_value[self.related_model_label_name + '__iexact'] = gag_textual_value.pop(self.related_model_label_name)
-                        mtm_obj_to_add = field.related_model.objects.get(**gag_textual_value)
+                        try:
+                            mtm_obj_to_add = field.related_model.objects.get(**gag_textual_value)
+                        except ObjectDoesNotExist:
+                            log.info(f"\nERROR: gag_textual_value='{gag_textual_value[self.related_model_label_name + '__iexact']}'")
+                            raise
                         log.debug(f'{mtm_obj_to_add=}')
                         getattr(self.obj_to_insert, field.name).add(mtm_obj_to_add)
 
@@ -622,7 +631,9 @@ class UpdateAndInsert():
                 self.import_attachments()
 
             log.info(f'\n{self.model_lowercase.upper()} OBJECT '
-                     f'N°{self.index+1} INSERTED!\n')
+                     f'N°{self.index+1}'
+                     f" ({self.dict_to_insert['name']}) "
+                     f'INSERTED!\n')
 
         if self.model_to_import_name == 'Trek':
             for self.index in range(len(self.api_data)):
