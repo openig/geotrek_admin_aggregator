@@ -16,7 +16,7 @@ console_handler = logging.StreamHandler()
 c_format = logging.Formatter('%(message)s')
 console_handler.setFormatter(c_format)
 log.addHandler(console_handler)
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 
 
 for source in SOURCES:
