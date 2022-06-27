@@ -15,7 +15,7 @@ from geotrek.trekking.models import OrderedTrekChild, Trek
 from gag_app.config.config import AUTH_USER, GAG_BASE_LANGUAGE
 from gag_app.env import (common, core_topology, list_label_field,
                          model_to_import)
-from gag_app.category_mapping import source_cat_to_gag_cat
+from gag_app.config.category_mapping import source_cat_to_gag_cat
 from gag_app.utils import geom_to_wkt
 
 log = logging.getLogger()
