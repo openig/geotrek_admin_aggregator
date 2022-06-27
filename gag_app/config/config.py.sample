@@ -1,4 +1,4 @@
-AUTH_USER = 'gadmin48'  # user name to whom media creation will be attributed.
+AUTH_USER = 'gagadmin'  # user name to whom media creation will be attributed.
 # for instance an admin account.
 
 GAG_BASE_LANGUAGE = 'fr'  # main language of GAG database
