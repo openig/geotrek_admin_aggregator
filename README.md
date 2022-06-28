@@ -106,7 +106,7 @@ SOURCES = [
 ]
 ```
 
-### Fichier `gag_app/category_mapping.py`
+### Fichier `gag_app/config/category_mapping.py`
 /!\ À terme, n'a pas vocation à être un fichier à configurer manuellement /!\
 
 Pour l'instant, la mise en correspondance des catégories des bases de données source et aggregator se fait via le dictionnaire `source_cat_to_gag_cat`. Chaque type de catégorie de données y est recensée. Pour chaque type de catégorie, l'ensemble des catégories de la base de données source est listée, et il faut associer à chacune d'entre elles la catégorie à laquelle elle correspond dans la base GAG.
