@@ -23,7 +23,7 @@ for source in SOURCES:
     try:
         tic = perf_counter()
 
-        log.info(f"\nBeginning aggregation of {source['AUTHENT_STRUCTURE']} data")
+        log.info(f"Beginning aggregation of {source['AUTHENT_STRUCTURE']} data")
 
         # Encapsulate script in transaction to avoid import of partial data
         with transaction.atomic():
@@ -50,8 +50,8 @@ for source in SOURCES:
                 main_parser.delete_update_insert_data(PORTALS=source['PORTALS'])
 
         toc = perf_counter()
-        log.info(f'Performed aggregation in {toc - tic:.0f} seconds')
+        log.info(f'Performed aggregation in {toc - tic:.0f} seconds\n')
     except Exception as err:
         log.exception(err)
         log.error(f'\n{source["AUTHENT_STRUCTURE"]} aggregation was stopped'
-                  ' because the above exception occurred')
+                  ' because the above exception occurred\n')
